@@ -16,6 +16,8 @@ import { buildKnowledgePack } from '../agents/context';
 import { buildReliabilityPack, analyzeReliabilityWithLLM, helloReliabilityFact } from '../agents/reliability';
 import { buildPartsPack, analyzePartsWithLLM } from '../agents/parts';
 import { reseedGenericTechnicians, applyMutations, getResourceSnapshot } from '../data/resourceStore';
+import DemoFooter from '../components/DemoFooter';
+
 
 type StatusFilter = 'ALL' | 'AVAILABLE' | 'DUE' | 'DOWN';
 
@@ -432,6 +434,7 @@ export default function Dashboard() {
         onClose={() => { setWoOpen(false); setModalIgnoreVehicle(false); setFocusedWorkOrderId(null); }}
         workorders={outstandingForModal}
       />
+      <DemoFooter />    
     </div>
   );
 }

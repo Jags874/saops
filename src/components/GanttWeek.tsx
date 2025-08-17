@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import type { Vehicle, WorkOrder, OpsTask } from '../types';
 import { getFailures } from '../data/adapter';
+import { demoNow, addDays } from '../utils/demoClock';
 
 export default function GanttWeek({
   vehicles,
@@ -16,15 +17,10 @@ export default function GanttWeek({
 }) {
   // Timeline bounds: today 00:00 → +7 days
   const t0 = useMemo(() => {
-    const d = new Date();
-    d.setHours(0, 0, 0, 0);
-    return d;
-  }, []);
-  const t1 = useMemo(() => {
-    const d = new Date(t0);
-    d.setDate(d.getDate() + 7);
-    return d;
-  }, [t0]);
+  return demoNow(); // already normalized to midnight
+}, []);
+  const t1 = useMemo(() => addDays(t0, 7), [t0]);
+
   const spanMs = t1.getTime() - t0.getTime();
 
   // Day labels

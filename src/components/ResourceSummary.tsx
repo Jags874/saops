@@ -3,6 +3,8 @@ import React, { useMemo } from 'react';
 import { getWorkOrders } from '../data/adapter';
 import { getResourceSnapshot } from '../data/resourceStore';
 import type { Skill, WorkOrder } from '../types';
+import { demoNow, startOfDay, addDays } from '../utils/demoClock';
+
 
 const SKILLS: Skill[] = ['Mechanic', 'AutoElec'];
 
@@ -15,12 +17,10 @@ export default function ResourceSummary() {
 
   // Build day list (YYYY-MM-DD)
   const days = useMemo(() => {
-    const start = atStartOfDay(new Date());
-    return Array.from({ length: horizon }, (_, i) => {
-      const d = new Date(start); d.setDate(start.getDate() + i);
-      return ymd(d);
-    });
-  }, [horizon]);
+  const start = startOfDay(demoNow());
+  return Array.from({ length: horizon }, (_, i) => ymd(addDays(start, i)));
+}, [horizon]);
+
 
   // Pull current snapshot and work orders
   const { technicians, availability } = getResourceSnapshot();

@@ -1,4 +1,4 @@
-// src/data/adapter.ts (file-backed initial load)
+// src/data/adapter.ts — file-backed + demo-date rebase
 import vehicles from './fake/vehicles.json';
 import pm from './fake/pm.json';
 import technicians from './fake/technicians.json';
@@ -13,44 +13,80 @@ import type {
   Technician, AvailabilitySlot, ConditionSnapshot
 } from '../types';
 
+import { demoNow, startOfDay, addDays, ymd as ymdUtil } from '../utils/demoClock';
+
+// --- demo rebase helpers (align dataset’s first ops day to the demo date) ---
+const DEMO_START = startOfDay(demoNow());
+let deltaDaysCache: number | null = null;
+
+function getDeltaDays(): number {
+  if (deltaDaysCache !== null) return deltaDaysCache;
+  const raw = opsTasks as OpsTask[];
+  if (!raw.length) { deltaDaysCache = 0; return 0; }
+  const minStartMs = Math.min(...raw.map(t => new Date(t.start).getTime()));
+  const datasetStart = new Date(minStartMs);
+  datasetStart.setHours(0, 0, 0, 0);
+  const diffMs = DEMO_START.getTime() - datasetStart.getTime();
+  deltaDaysCache = Math.round(diffMs / 86400000); // whole days
+  return deltaDaysCache!;
+}
+
+function shiftISO(isoStr: string, days: number) {
+  const d = new Date(isoStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
+}
+function shiftYmd(ymdStr: string, days: number) {
+  const d = new Date(`${ymdStr}T00:00:00`);
+  d.setDate(d.getDate() + days);
+  return ymdUtil(d);
+}
+
+// --- simple passthroughs for static datasets ---
 export function getVehicles(count = (vehicles as Vehicle[]).length): Vehicle[] {
   return (vehicles as Vehicle[]).slice(0, count);
 }
+export function getPMTasks(): PMTask[] { return pm as PMTask[]; }
+export function getTechnicians(): Technician[] { return technicians as Technician[]; }
+export function getFailures(): FailureRecord[] { return failures as FailureRecord[]; }
+export function getConditions(): ConditionSnapshot[] { return conditions as ConditionSnapshot[]; }
 
-export function getPMTasks(): PMTask[] {
-  return pm as PMTask[];
-}
-
-export function getTechnicians(): Technician[] {
-  return technicians as Technician[];
-}
-
+// --- time-sensitive datasets (rebased) ---
 export function getAvailability(): AvailabilitySlot[] {
-  return availability as AvailabilitySlot[];
-}
-
-export function getFailures(): FailureRecord[] {
-  return failures as FailureRecord[];
-}
-
-export function getConditions(): ConditionSnapshot[] {
-  return conditions as ConditionSnapshot[];
+  const delta = getDeltaDays();
+  return (availability as AvailabilitySlot[]).map(a => ({
+    ...a,
+    date: shiftYmd(a.date, delta),
+  }));
 }
 
 export function getOpsTasks(days = 7): OpsTask[] {
-  // Filter to next `days` from "today" to keep UI tidy
-  const start = new Date(); start.setHours(0, 0, 0, 0);
-  const end = new Date(start); end.setDate(end.getDate() + days);
-  return (opsTasks as OpsTask[]).filter(t => {
-    const s = new Date(t.start);
-    return s >= start && s < end;
-  });
+  const delta = getDeltaDays();
+  const start = DEMO_START;
+  const end = addDays(start, days);
+  return (opsTasks as OpsTask[])
+    .map(t => ({
+      ...t,
+      start: shiftISO(t.start, delta),
+      end: shiftISO(t.end, delta),
+    }))
+    .filter(t => {
+      const s = new Date(t.start);
+      return s >= start && s < end;
+    });
 }
 
 export function getWorkOrders(): WorkOrder[] {
-  return workorders as WorkOrder[];
+  const delta = getDeltaDays();
+  return (workorders as WorkOrder[]).map(w => {
+    if (w.start && w.end) {
+      return { ...w, start: shiftISO(w.start, delta), end: shiftISO(w.end, delta) };
+    }
+    return w;
+  });
 }
 
+// --- demand derived from (rebased) ops ---
 export function getDemandHistory(days = 7): DemandRecord[] {
   const ops = getOpsTasks(days);
   const byDay = new Map<string, number>();

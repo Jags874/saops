@@ -32,6 +32,10 @@ export function reseedGenericTechnicians() {
 }
 
 export function getResourceSnapshot() {
+  // Auto-seed on first call (or after HMR) so availability isn’t empty
+  if (technicians.length === 0 || availability.length === 0 || parts.length === 0) {
+    reseedGenericTechnicians();
+  }
   return { technicians, availability, parts };
 }
 

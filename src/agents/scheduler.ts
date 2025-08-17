@@ -1,6 +1,8 @@
 // src/agents/scheduler.ts
 import type { WorkOrder, OpsTask, SchedulerPolicy, Priority, WoType, Skill } from '../types';
 import { getResourceSnapshot } from '../data/resourceStore';
+import { demoNow } from '../utils/demoClock';
+
 
 // A very small, deterministic scheduler that:
 // - Orders WOs by type/priority and due-ness
@@ -132,7 +134,7 @@ export function proposeSchedule(
   opsTasks: OpsTask[],
   policy?: SchedulerPolicy
 ): PlanResult {
-  const now = new Date();
+  const now = demoNow();
   const H = horizonDays(policy);
   const windows = getPolicyWindows(policy);
   const avoidOps = !!policy?.avoidOps;
