@@ -1,0 +1,422 @@
+[
+  {
+    "technicianId": "techA",
+    "date": "2025-08-17",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-17",
+    "hours": 4
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-17",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-17",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-17",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-17",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-18",
+    "hours": 4
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-18",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-18",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-18",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-18",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-18",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-19",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-19",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-19",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-19",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-19",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-19",
+    "hours": 4
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-20",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-20",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-20",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-20",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-20",
+    "hours": 4
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-20",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-21",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-21",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-21",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-21",
+    "hours": 4
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-21",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-21",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-22",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-22",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-22",
+    "hours": 4
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-22",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-22",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-22",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-23",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-23",
+    "hours": 4
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-23",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-23",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-23",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-23",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-24",
+    "hours": 4
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-24",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-24",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-24",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-24",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-24",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-25",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-25",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-25",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-25",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-25",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-25",
+    "hours": 4
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-26",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-26",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-26",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-26",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-26",
+    "hours": 4
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-26",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-27",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-27",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-27",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-27",
+    "hours": 4
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-27",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-27",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-28",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-28",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-28",
+    "hours": 4
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-28",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-28",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-28",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-29",
+    "hours": 8
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-29",
+    "hours": 4
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-29",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-29",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-29",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-29",
+    "hours": 8
+  },
+  {
+    "technicianId": "techA",
+    "date": "2025-08-30",
+    "hours": 4
+  },
+  {
+    "technicianId": "techB",
+    "date": "2025-08-30",
+    "hours": 8
+  },
+  {
+    "technicianId": "techC",
+    "date": "2025-08-30",
+    "hours": 8
+  },
+  {
+    "technicianId": "techD",
+    "date": "2025-08-30",
+    "hours": 8
+  },
+  {
+    "technicianId": "techE",
+    "date": "2025-08-30",
+    "hours": 8
+  },
+  {
+    "technicianId": "techF",
+    "date": "2025-08-30",
+    "hours": 8
+  }
+]

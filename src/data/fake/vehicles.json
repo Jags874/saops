@@ -1,22 +1,202 @@
 [
-  { "id": "V001", "make": "Kenworth",  "model": "K200",        "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V002", "make": "Volvo",     "model": "FH16",        "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V003", "make": "Scania",    "model": "R500",        "depot": "Depot A", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V004", "make": "Mack",      "model": "Anthem",      "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V005", "make": "DAF",       "model": "XF",          "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V006", "make": "Mercedes",  "model": "Actros",      "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V007", "make": "Kenworth",  "model": "T610",        "depot": "Depot C", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V008", "make": "Volvo",     "model": "FM",          "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V009", "make": "Scania",    "model": "G410",        "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V010", "make": "Mack",      "model": "Granite",     "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V011", "make": "DAF",       "model": "CF",          "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V012", "make": "Mercedes",  "model": "Arocs",       "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V013", "make": "Kenworth",  "model": "K220",        "depot": "Depot A", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V014", "make": "Volvo",     "model": "FH",          "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V015", "make": "Scania",    "model": "S730",        "depot": "Depot B", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V016", "make": "Mack",      "model": "Super-Liner", "depot": "Depot A", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V017", "make": "DAF",       "model": "XG+",         "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V018", "make": "Mercedes",  "model": "Actros",      "depot": "Depot B", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V019", "make": "Kenworth",  "model": "T909",        "depot": "Depot A", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V020", "make": "Volvo",     "model": "FMX",         "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" }
+  {
+    "id": "V001",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2020,
+    "criticality": "Low",
+    "odometerKm": 312500,
+    "engineHours": 8350
+  },
+  {
+    "id": "V002",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2021,
+    "criticality": "Medium",
+    "odometerKm": 325000,
+    "engineHours": 8700
+  },
+  {
+    "id": "V003",
+    "status": "DUE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2022,
+    "criticality": "Low",
+    "odometerKm": 337500,
+    "engineHours": 9050
+  },
+  {
+    "id": "V004",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2023,
+    "criticality": "Medium",
+    "odometerKm": 350000,
+    "engineHours": 9400
+  },
+  {
+    "id": "V005",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2024,
+    "criticality": "High",
+    "odometerKm": 362500,
+    "engineHours": 9750
+  },
+  {
+    "id": "V006",
+    "status": "DUE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2019,
+    "criticality": "Medium",
+    "odometerKm": 375000,
+    "engineHours": 10100
+  },
+  {
+    "id": "V007",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2020,
+    "criticality": "Low",
+    "odometerKm": 387500,
+    "engineHours": 10450
+  },
+  {
+    "id": "V008",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2021,
+    "criticality": "Medium",
+    "odometerKm": 400000,
+    "engineHours": 10800
+  },
+  {
+    "id": "V009",
+    "status": "DOWN",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2022,
+    "criticality": "Low",
+    "odometerKm": 412500,
+    "engineHours": 11150
+  },
+  {
+    "id": "V010",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2023,
+    "criticality": "High",
+    "odometerKm": 425000,
+    "engineHours": 11500
+  },
+  {
+    "id": "V011",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2024,
+    "criticality": "Low",
+    "odometerKm": 437500,
+    "engineHours": 11850
+  },
+  {
+    "id": "V012",
+    "status": "DUE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2019,
+    "criticality": "Medium",
+    "odometerKm": 450000,
+    "engineHours": 12200
+  },
+  {
+    "id": "V013",
+    "status": "DOWN",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2020,
+    "criticality": "Low",
+    "odometerKm": 462500,
+    "engineHours": 12550
+  },
+  {
+    "id": "V014",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2021,
+    "criticality": "Medium",
+    "odometerKm": 475000,
+    "engineHours": 12900
+  },
+  {
+    "id": "V015",
+    "status": "DUE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2022,
+    "criticality": "High",
+    "odometerKm": 487500,
+    "engineHours": 13250
+  },
+  {
+    "id": "V016",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2023,
+    "criticality": "Medium",
+    "odometerKm": 500000,
+    "engineHours": 13600
+  },
+  {
+    "id": "V017",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2024,
+    "criticality": "Low",
+    "odometerKm": 512500,
+    "engineHours": 13950
+  },
+  {
+    "id": "V018",
+    "status": "DUE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2019,
+    "criticality": "Medium",
+    "odometerKm": 525000,
+    "engineHours": 14300
+  },
+  {
+    "id": "V019",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Volvo FH16",
+    "year": 2020,
+    "criticality": "Low",
+    "odometerKm": 537500,
+    "engineHours": 14650
+  },
+  {
+    "id": "V020",
+    "status": "AVAILABLE",
+    "image": "/assets/prime-mover.png",
+    "model": "Kenworth T610",
+    "year": 2021,
+    "criticality": "High",
+    "odometerKm": 550000,
+    "engineHours": 15000
+  }
 ]

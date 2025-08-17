@@ -1,7 +1,52 @@
 [
-  { "pmId":"PM-ENG-15K", "assetModel":"*", "subsystem":"engine",       "trigger":{"type":"mileage","intervalKm":15000}, "requiredParts":["ENG-OIL-FLTR","ENG-15W40"], "labourHours":3,   "requiredSkills":["engine","general"], "tools":["Torque Wrench"] },
-  { "pmId":"PM-BRK-INSP","assetModel":"*", "subsystem":"brakes",       "trigger":{"type":"time","intervalDays":90},      "requiredParts":[],                          "labourHours":1.5, "requiredSkills":["brakes"],          "tools":["Brake Gauge"] },
-  { "pmId":"PM-TRN-CLUT","assetModel":"K220","subsystem":"transmission","trigger":{"type":"hours","intervalHours":1000},"requiredParts":["TRN-FLUID"],                 "labourHours":2,   "requiredSkills":["transmission"],    "tools":["Trans Jack"] },
-  { "pmId":"PM-COOL-CHK","assetModel":"*", "subsystem":"cooling",      "trigger":{"type":"time","intervalDays":180},     "requiredParts":["COL-COOLANT"],              "labourHours":1,   "requiredSkills":["cooling"],         "tools":["Pressure Tester"] },
-  { "pmId":"PM-ELC-BATT","assetModel":"*", "subsystem":"electrical",   "trigger":{"type":"time","intervalDays":120},     "requiredParts":[],                          "labourHours":0.8, "requiredSkills":["electrical"],       "tools":["Battery Tester"] }
+  {
+    "id": "PM-ENG-500h",
+    "title": "Engine Inspection",
+    "subsystem": "engine",
+    "interval": "500h",
+    "estimatedHours": 4,
+    "requiredSkills": [
+      "Mechanic"
+    ]
+  },
+  {
+    "id": "PM-BRK-30k",
+    "title": "Brake Inspection",
+    "subsystem": "brakes",
+    "interval": "30000km",
+    "estimatedHours": 3,
+    "requiredSkills": [
+      "Mechanic"
+    ]
+  },
+  {
+    "id": "PM-TRANS-10w",
+    "title": "Transmission Check",
+    "subsystem": "transmission",
+    "interval": "10w",
+    "estimatedHours": 3,
+    "requiredSkills": [
+      "Mechanic"
+    ]
+  },
+  {
+    "id": "PM-COOL-90d",
+    "title": "Cooling System Service",
+    "subsystem": "cooling",
+    "interval": "90d",
+    "estimatedHours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ]
+  },
+  {
+    "id": "PM-ELEC-180d",
+    "title": "Electrical System Audit",
+    "subsystem": "electrical",
+    "interval": "180d",
+    "estimatedHours": 2,
+    "requiredSkills": [
+      "AutoElec"
+    ]
+  }
 ]
