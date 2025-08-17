@@ -48,5 +48,15 @@
     "requiredSkills": [
       "AutoElec"
     ]
+  },
+  {
+    "id": "PM-GEN-30d",
+    "title": "Monthly General Inspection",
+    "subsystem": "general",
+    "interval": "30d",
+    "estimatedHours": 1,
+    "requiredSkills": [
+      "Mechanic"
+    ]
   }
 ]

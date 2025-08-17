@@ -36,6 +36,7 @@ export type WorkOrder = {
   requiredSkills?: Skill[];
   parts?: Array<{ partId: string; qty: number }>;
   created?: string; // ISO
+  tools?: string[];
 };
 
 export type OpsTask = {

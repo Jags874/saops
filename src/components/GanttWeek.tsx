@@ -73,11 +73,20 @@ export default function GanttWeek({
     return `${base} bg-rose-600/20 text-rose-200 border-rose-700/40`; // DOWN
   };
 
-  const woColor = (w: WorkOrder) => {
-    if (w.type === 'Corrective') return 'bg-rose-600/70 hover:bg-rose-500';
-    if (w.priority === 'Critical' || w.priority === 'High') return 'bg-amber-500/80 hover:bg-amber-400';
-    return 'bg-emerald-600/70 hover:bg-emerald-500';
-  };
+// Replace your existing woColor with this:
+const woColor = (w: WorkOrder) => {
+  switch (w.priority) {
+    case 'Critical':
+    case 'High':
+      return 'bg-rose-600/80 hover:bg-rose-500';    // red
+    case 'Medium':
+      return 'bg-amber-500/80 hover:bg-amber-400';  // amber
+    case 'Low':
+    default:
+      return 'bg-emerald-600/80 hover:bg-emerald-500'; // green
+  }
+};
+
 
   const opsColor = 'bg-sky-700/50';
 
