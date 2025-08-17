@@ -10,6 +10,14 @@ import pmRaw from './fake/pm.json';
 // Parts catalog may be maintained in TS; handle multiple export styles safely.
 import * as partsCatalog from './partsCatalog';
 import techniciansRaw from './fake/technicians.json';
+import {
+  getRuntimeWorkordersOverlay,
+  getCancelledOpsIds,
+  getPendingOpsCancelConflicts,
+  addCancelledOps,
+  clearPendingOpsCancelConflicts
+} from './resourceStore';
+
 
 // --- Types are imported by consumers; we keep this file light on explicit types to
 //     avoid tight coupling across the app and to tolerate shape drift in fake data.
@@ -69,29 +77,77 @@ export function getVehicles(limit?: number) {
 
 // ===== Work Orders (as-is; already anchored by rebase script) =====
 export function getWorkOrders() {
-  return (workordersRaw as any[]).slice();
+  // Load your base JSON as you already do
+  const base: any[] = (workordersRaw as any[]) ?? [];
+
+  // Merge runtime overlay (add/replace by id)
+  const byId = new Map<string, any>();
+  for (const w of base) byId.set(String(w.id), { ...w });
+  for (const w of getRuntimeWorkordersOverlay()) byId.set(String(w.id), { ...w });
+
+  // Return array in a stable order: scheduled first by start time, then the rest
+  const all = Array.from(byId.values());
+  all.sort((a, b) => {
+    const aSched = a.status === 'Scheduled' && a.start ? 0 : 1;
+    const bSched = b.status === 'Scheduled' && b.start ? 0 : 1;
+    if (aSched !== bSched) return aSched - bSched;
+    const at = a.start ? new Date(a.start).getTime() : Infinity;
+    const bt = b.start ? new Date(b.start).getTime() : Infinity;
+    return at - bt;
+  });
+  return all;
 }
+
 
 // ===== Ops Tasks filtered by LOCAL 7-day window with overlap semantics =====
-export function getOpsTasks(days = 7) {
-  const anchorUTC = new Date(STATIC_WEEK_START_ISO);
-  // Local midnight for the same calendar date as the UTC anchor (22 Aug 2025)
-  const localStart = new Date(
-    anchorUTC.getUTCFullYear(),
-    anchorUTC.getUTCMonth(),
-    anchorUTC.getUTCDate(),
-    0, 0, 0, 0
-  );
-  const localEnd = new Date(localStart.getTime() + days * DAY_MS);
+export function getOpsTasks(horizonDays: number) {
+  // Load base ops tasks exactly as you already do for the static week
+  const base: any[] = (opsTasksRaw as any[]) ?? [];
 
-  return (opsTasksRaw as any[]).filter((t) => {
-    const s = toDate(t?.start);
-    const e = toDate(t?.end);
-    if (!s || !e) return false;
-    // Include if it overlaps the [localStart, localEnd) window at all
-    return e > localStart && s < localEnd;
-  });
+  // 1) Filter out explicit cancels
+  const cancelled = getCancelledOpsIds();
+  let tasks = base.filter(t => !cancelled.has(String(t.id).toUpperCase()));
+
+  // 2) Resolve pending “conflictsWith: WO-…” placeholders
+  const pending = getPendingOpsCancelConflicts();
+  if (pending.length) {
+    const wos = getWorkOrders(); // merged (base + overlay), includes new WO
+    const toCancel: string[] = [];
+
+    // Helper: simple overlap check
+    const overlaps = (aStart?: string, aEnd?: string, bStart?: string, bEnd?: string) => {
+      if (!aStart || !aEnd || !bStart || !bEnd) return false;
+      const aS = new Date(aStart).getTime();
+      const aE = new Date(aEnd).getTime();
+      const bS = new Date(bStart).getTime();
+      const bE = new Date(bEnd).getTime();
+      return aS < bE && bS < aE;
+    };
+
+    for (const woId of pending) {
+      const w = wos.find(x => String(x.id).toUpperCase() === String(woId).toUpperCase());
+      if (!w || !w.start || !w.end) continue;
+      // pick the first ops task on same vehicle that overlaps the WO window
+      const hit = tasks.find(t =>
+        String(t.vehicleId) === String(w.vehicleId) &&
+        overlaps(w.start, w.end, t.start, t.end)
+      );
+      if (hit) toCancel.push(String(hit.id).toUpperCase());
+    }
+
+    if (toCancel.length) {
+      addCancelledOps(toCancel);
+      // Remove them from the result set
+      tasks = tasks.filter(t => !toCancel.includes(String(t.id).toUpperCase()));
+    }
+    // Clear placeholders so we don’t resolve them twice
+    clearPendingOpsCancelConflicts();
+  }
+
+  // Return week’s tasks (your current logic likely already clips to 7 days)
+  return tasks;
 }
+
 
 
 // ===== Demand history derived from ops tasks (next N days from static start) =====
