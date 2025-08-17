@@ -1,186 +1,569 @@
 [
   {
     "id": "WO-001",
-    "vehicleId": "V001",
-    "title": "Electrical System Audit",
-    "type": "Preventive",
-    "priority": "Low",
+    "vehicleId": "V008",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
     "status": "Scheduled",
-    "subsystem": "electrical",
+    "subsystem": "cooling",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "technicianId": "techE",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-17T19:00:00",
-    "end": "2025-08-17T21:00:00"
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-22T20:00:00.000Z",
+    "end": "2025-08-22T22:00:00.000Z"
   },
   {
     "id": "WO-002",
     "vehicleId": "V001",
-    "title": "Electrical System Audit",
-    "type": "Preventive",
-    "priority": "Low",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
     "status": "Scheduled",
-    "subsystem": "electrical",
+    "subsystem": "cooling",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "technicianId": "techE",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-18T19:00:00",
-    "end": "2025-08-18T21:00:00"
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-23T20:00:00.000Z",
+    "end": "2025-08-23T22:00:00.000Z"
   },
   {
     "id": "WO-003",
-    "vehicleId": "V001",
-    "title": "PM follow-up: electrical",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 1,
+    "vehicleId": "V020",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "created": "2025-08-15T00:00:00"
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T22:00:00.000Z"
   },
   {
     "id": "WO-004",
-    "vehicleId": "V001",
-    "title": "Minor corrective: brakes",
+    "vehicleId": "V019",
+    "title": "Thermostat replacement",
     "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "brakes",
+    "priority": "Medium",
+    "status": "Scheduled",
+    "subsystem": "cooling",
     "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-201",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "created": "2025-08-16T00:00:00"
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-25T20:00:00.000Z",
+    "end": "2025-08-25T22:00:00.000Z"
   },
   {
     "id": "WO-005",
-    "vehicleId": "V002",
-    "title": "Electrical System Audit",
-    "type": "Preventive",
-    "priority": "Low",
+    "vehicleId": "V013",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
     "status": "Scheduled",
-    "subsystem": "electrical",
+    "subsystem": "cooling",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "technicianId": "techF",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-19T19:00:00",
-    "end": "2025-08-19T21:00:00"
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-26T20:00:00.000Z",
+    "end": "2025-08-26T22:00:00.000Z"
   },
   {
     "id": "WO-006",
-    "vehicleId": "V002",
-    "title": "Electrical System Audit",
-    "type": "Preventive",
-    "priority": "Low",
+    "vehicleId": "V006",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
     "status": "Scheduled",
-    "subsystem": "electrical",
+    "subsystem": "cooling",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "technicianId": "techF",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-20T19:00:00",
-    "end": "2025-08-20T21:00:00"
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-27T20:00:00.000Z",
+    "end": "2025-08-27T22:00:00.000Z"
   },
   {
     "id": "WO-007",
-    "vehicleId": "V002",
-    "title": "PM follow-up: electrical",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 1,
+    "vehicleId": "V010",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "created": "2025-08-15T00:00:00"
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-28T20:00:00.000Z",
+    "end": "2025-08-28T22:00:00.000Z"
   },
   {
     "id": "WO-008",
+    "vehicleId": "V003",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [
+      {
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-22T20:00:00.000Z",
+    "end": "2025-08-22T22:00:00.000Z"
+  },
+  {
+    "id": "WO-009",
+    "vehicleId": "V007",
+    "title": "Replace thermostat & coolant flush",
+    "type": "Corrective",
+    "priority": "High",
+    "status": "In Progress",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [
+      {
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-23T10:00:00.000Z",
+    "end": "2025-08-23T12:00:00.000Z"
+  },
+  {
+    "id": "WO-010",
+    "vehicleId": "V002",
+    "title": "Thermostat replacement",
+    "type": "Corrective",
+    "priority": "Medium",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [
+      {
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T22:00:00.000Z"
+  },
+  {
+    "id": "WO-011",
+    "vehicleId": "V005",
+    "title": "Engine wiring harness replacement",
+    "type": "Corrective",
+    "priority": "High",
+    "status": "In Progress",
+    "subsystem": "engine",
+    "hours": 6,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
+    ],
+    "parts": [
+      {
+        "partId": "P-501",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-22T10:00:00.000Z",
+    "end": "2025-08-22T16:00:00.000Z"
+  },
+  {
+    "id": "WO-012",
+    "vehicleId": "V005",
+    "title": "Engine sensors calibration & verification",
+    "type": "Preventive",
+    "priority": "Medium",
+    "status": "Scheduled",
+    "subsystem": "engine",
+    "hours": 3,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
+    ],
+    "parts": [],
+    "created": "2025-08-22T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T23:00:00.000Z"
+  },
+  {
+    "id": "WO-013",
+    "vehicleId": "V012",
+    "title": "Transmission seal kit & fluid service",
+    "type": "Corrective",
+    "priority": "Medium",
+    "status": "Scheduled",
+    "subsystem": "transmission",
+    "hours": 4,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Transmission Jack",
+      "Seal Driver"
+    ],
+    "parts": [
+      {
+        "partId": "P-401",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-25T20:00:00.000Z",
+    "end": "2025-08-26T00:00:00.000Z"
+  },
+  {
+    "id": "WO-014",
+    "vehicleId": "V012",
+    "title": "Clutch pack inspection",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "transmission",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Transmission Jack",
+      "Seal Driver"
+    ],
+    "parts": [],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-27T20:00:00.000Z",
+    "end": "2025-08-27T22:00:00.000Z"
+  },
+  {
+    "id": "WO-015",
+    "vehicleId": "V018",
+    "title": "ECU replacement & reflash; inspect grounds",
+    "type": "Corrective",
+    "priority": "High",
+    "status": "In Progress",
+    "subsystem": "electrical",
+    "hours": 5,
+    "requiredSkills": [
+      "AutoElec"
+    ],
+    "tools": [
+      "Multimeter",
+      "ECU Programmer"
+    ],
+    "parts": [
+      {
+        "partId": "P-310",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-23T10:00:00.000Z",
+    "end": "2025-08-23T15:00:00.000Z"
+  },
+  {
+    "id": "WO-016",
+    "vehicleId": "V011",
+    "title": "Accident repair: front axle, cooling pack, bodywork",
+    "type": "Corrective",
+    "priority": "High",
+    "status": "In Progress",
+    "subsystem": "engine",
+    "hours": 8,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Frame Straightener",
+      "Torque Wrench",
+      "Coolant Pressure Tester"
+    ],
+    "parts": [
+      {
+        "partId": "P-221",
+        "qty": 1
+      },
+      {
+        "partId": "P-501",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-24T10:00:00.000Z",
+    "end": "2025-08-24T18:00:00.000Z"
+  },
+  {
+    "id": "WO-017",
+    "vehicleId": "V001",
+    "title": "Transmission PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "transmission",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Transmission Jack",
+      "Seal Driver"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-26T20:00:00.000Z",
+    "end": "2025-08-26T22:00:00.000Z"
+  },
+  {
+    "id": "WO-018",
+    "vehicleId": "V001",
+    "title": "Brakes PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-27T20:00:00.000Z",
+    "end": "2025-08-27T22:00:00.000Z"
+  },
+  {
+    "id": "WO-019",
+    "vehicleId": "V001",
+    "title": "Minor corrective: cooling",
+    "type": "Corrective",
+    "priority": "Low",
+    "status": "Open",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [
+      {
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z"
+  },
+  {
+    "id": "WO-020",
+    "vehicleId": "V002",
+    "title": "Engine PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "engine",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-28T20:00:00.000Z",
+    "end": "2025-08-28T22:00:00.000Z"
+  },
+  {
+    "id": "WO-021",
+    "vehicleId": "V002",
+    "title": "Brakes PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-22T20:00:00.000Z",
+    "end": "2025-08-22T22:00:00.000Z"
+  },
+  {
+    "id": "WO-022",
     "vehicleId": "V002",
     "title": "Minor corrective: cooling",
     "type": "Corrective",
@@ -197,427 +580,41 @@
     ],
     "parts": [
       {
-        "partId": "P-221",
+        "partId": "P-113",
         "qty": 1
       },
       {
-        "partId": "P-113",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-009",
-    "vehicleId": "V003",
-    "title": "Engine Inspection",
-    "type": "Preventive",
-    "priority": "Medium",
-    "status": "Scheduled",
-    "subsystem": "engine",
-    "hours": 4,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techB",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-21T19:00:00",
-    "end": "2025-08-21T23:00:00"
-  },
-  {
-    "id": "WO-010",
-    "vehicleId": "V003",
-    "title": "PM short: engine",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "engine",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-15T00:00:00",
-    "start": "2025-08-22T19:00:00",
-    "end": "2025-08-22T21:00:00"
-  },
-  {
-    "id": "WO-011",
-    "vehicleId": "V003",
-    "title": "Minor corrective: electrical",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 2,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-012",
-    "vehicleId": "V004",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-23T19:00:00",
-    "end": "2025-08-23T22:00:00"
-  },
-  {
-    "id": "WO-013",
-    "vehicleId": "V004",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-17T19:00:00",
-    "end": "2025-08-17T22:00:00"
-  },
-  {
-    "id": "WO-014",
-    "vehicleId": "V004",
-    "title": "PM follow-up: brakes",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
-  },
-  {
-    "id": "WO-015",
-    "vehicleId": "V004",
-    "title": "Minor corrective: cooling",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "cooling",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Coolant Pressure Tester",
-      "Hose Clamp Pliers"
-    ],
-    "parts": [
-      {
         "partId": "P-221",
         "qty": 1
-      },
-      {
-        "partId": "P-113",
-        "qty": 1
       }
     ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-016",
-    "vehicleId": "V005",
-    "title": "Cooling System Service",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "cooling",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Coolant Pressure Tester",
-      "Hose Clamp Pliers"
-    ],
-    "parts": [
-      {
-        "partId": "P-221",
-        "qty": 1
-      },
-      {
-        "partId": "P-113",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techB",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-18T19:00:00",
-    "end": "2025-08-18T21:00:00"
-  },
-  {
-    "id": "WO-017",
-    "vehicleId": "V005",
-    "title": "Cooling System Service",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "cooling",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Coolant Pressure Tester",
-      "Hose Clamp Pliers"
-    ],
-    "parts": [
-      {
-        "partId": "P-221",
-        "qty": 1
-      },
-      {
-        "partId": "P-113",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-19T19:00:00",
-    "end": "2025-08-19T21:00:00"
-  },
-  {
-    "id": "WO-018",
-    "vehicleId": "V005",
-    "title": "PM follow-up: cooling",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "cooling",
-    "hours": 1,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Coolant Pressure Tester",
-      "Hose Clamp Pliers"
-    ],
-    "parts": [
-      {
-        "partId": "P-221",
-        "qty": 1
-      },
-      {
-        "partId": "P-113",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
-  },
-  {
-    "id": "WO-019",
-    "vehicleId": "V005",
-    "title": "Minor corrective: brakes",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-020",
-    "vehicleId": "V006",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Medium",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-20T19:00:00",
-    "end": "2025-08-20T22:00:00"
-  },
-  {
-    "id": "WO-021",
-    "vehicleId": "V006",
-    "title": "PM short: brakes",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techB",
-    "created": "2025-08-15T00:00:00",
-    "start": "2025-08-21T19:00:00",
-    "end": "2025-08-21T21:00:00"
-  },
-  {
-    "id": "WO-022",
-    "vehicleId": "V006",
-    "title": "Minor corrective: brakes",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-023",
-    "vehicleId": "V007",
-    "title": "Cooling System Service",
+    "vehicleId": "V003",
+    "title": "Transmission PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
-    "subsystem": "cooling",
+    "subsystem": "transmission",
     "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Coolant Pressure Tester",
-      "Hose Clamp Pliers"
+      "Transmission Jack",
+      "Seal Driver"
     ],
-    "parts": [
-      {
-        "partId": "P-221",
-        "qty": 1
-      },
-      {
-        "partId": "P-113",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techB",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-22T19:00:00",
-    "end": "2025-08-22T21:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-23T20:00:00.000Z",
+    "end": "2025-08-23T22:00:00.000Z"
   },
   {
     "id": "WO-024",
-    "vehicleId": "V007",
-    "title": "Cooling System Service",
+    "vehicleId": "V003",
+    "title": "Cooling PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
@@ -630,30 +627,86 @@
       "Coolant Pressure Tester",
       "Hose Clamp Pliers"
     ],
-    "parts": [
-      {
-        "partId": "P-221",
-        "qty": 1
-      },
-      {
-        "partId": "P-113",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-23T19:00:00",
-    "end": "2025-08-23T21:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T22:00:00.000Z"
   },
   {
     "id": "WO-025",
-    "vehicleId": "V007",
-    "title": "PM follow-up: cooling",
+    "vehicleId": "V003",
+    "title": "Minor corrective: brakes",
+    "type": "Corrective",
+    "priority": "Low",
+    "status": "Open",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [
+      {
+        "partId": "P-201",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z"
+  },
+  {
+    "id": "WO-026",
+    "vehicleId": "V004",
+    "title": "Brakes PM service",
     "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-25T20:00:00.000Z",
+    "end": "2025-08-25T22:00:00.000Z"
+  },
+  {
+    "id": "WO-027",
+    "vehicleId": "V004",
+    "title": "Cooling PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-26T20:00:00.000Z",
+    "end": "2025-08-26T22:00:00.000Z"
+  },
+  {
+    "id": "WO-028",
+    "vehicleId": "V004",
+    "title": "Minor corrective: cooling",
+    "type": "Corrective",
     "priority": "Low",
     "status": "Open",
     "subsystem": "cooling",
-    "hours": 1,
+    "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
@@ -663,23 +716,23 @@
     ],
     "parts": [
       {
-        "partId": "P-221",
+        "partId": "P-113",
         "qty": 1
       },
       {
-        "partId": "P-113",
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "created": "2025-08-15T00:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
-    "id": "WO-026",
-    "vehicleId": "V007",
-    "title": "Minor corrective: engine",
-    "type": "Corrective",
+    "id": "WO-029",
+    "vehicleId": "V006",
+    "title": "Engine PM service",
+    "type": "Preventive",
     "priority": "Low",
-    "status": "Open",
+    "status": "Scheduled",
     "subsystem": "engine",
     "hours": 2,
     "requiredSkills": [
@@ -687,25 +740,22 @@
     ],
     "tools": [
       "Diagnostic Scanner",
-      "Torque Wrench"
+      "Harness Crimping Set"
     ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-27T20:00:00.000Z",
+    "end": "2025-08-27T22:00:00.000Z"
   },
   {
-    "id": "WO-027",
-    "vehicleId": "V008",
-    "title": "Brake Inspection",
+    "id": "WO-030",
+    "vehicleId": "V006",
+    "title": "Brakes PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
     "subsystem": "brakes",
-    "hours": 3,
+    "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
@@ -713,49 +763,16 @@
       "Torque Wrench",
       "Brake Bleeder Kit"
     ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techA",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-17T19:00:00",
-    "end": "2025-08-17T22:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-28T20:00:00.000Z",
+    "end": "2025-08-28T22:00:00.000Z"
   },
   {
-    "id": "WO-028",
-    "vehicleId": "V008",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-18T19:00:00",
-    "end": "2025-08-18T22:00:00"
-  },
-  {
-    "id": "WO-029",
-    "vehicleId": "V008",
-    "title": "PM follow-up: brakes",
-    "type": "Preventive",
+    "id": "WO-031",
+    "vehicleId": "V006",
+    "title": "Minor corrective: brakes",
+    "type": "Corrective",
     "priority": "Low",
     "status": "Open",
     "subsystem": "brakes",
@@ -773,10 +790,52 @@
         "qty": 1
       }
     ],
-    "created": "2025-08-15T00:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
-    "id": "WO-030",
+    "id": "WO-032",
+    "vehicleId": "V008",
+    "title": "Brakes PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-22T20:00:00.000Z",
+    "end": "2025-08-22T22:00:00.000Z"
+  },
+  {
+    "id": "WO-033",
+    "vehicleId": "V008",
+    "title": "Engine PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "engine",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-23T20:00:00.000Z",
+    "end": "2025-08-23T22:00:00.000Z"
+  },
+  {
+    "id": "WO-034",
     "vehicleId": "V008",
     "title": "Minor corrective: brakes",
     "type": "Corrective",
@@ -797,166 +856,122 @@
         "qty": 1
       }
     ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-031",
-    "vehicleId": "V009",
-    "title": "Restore to service - electrical",
-    "type": "Corrective",
-    "priority": "High",
-    "status": "In Progress",
-    "subsystem": "electrical",
-    "hours": 6,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techF",
-    "created": "2025-08-16T00:00:00",
-    "start": "2025-08-17T09:00:00",
-    "end": "2025-08-17T15:00:00"
-  },
-  {
-    "id": "WO-032",
-    "vehicleId": "V009",
-    "title": "Engine Inspection",
-    "type": "Preventive",
-    "priority": "Medium",
-    "status": "Scheduled",
-    "subsystem": "engine",
-    "hours": 4,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techA",
-    "created": "2025-08-15T00:00:00",
-    "start": "2025-08-19T19:00:00",
-    "end": "2025-08-19T23:00:00"
-  },
-  {
-    "id": "WO-033",
-    "vehicleId": "V009",
-    "title": "PM follow-up: engine",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "engine",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
-  },
-  {
-    "id": "WO-034",
-    "vehicleId": "V010",
-    "title": "Transmission Check",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "transmission",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Transmission Jack",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-401",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techD",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-20T19:00:00",
-    "end": "2025-08-20T22:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-035",
-    "vehicleId": "V010",
-    "title": "Transmission Check",
+    "vehicleId": "V009",
+    "title": "Engine PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
-    "subsystem": "transmission",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Transmission Jack",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-401",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techA",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-21T19:00:00",
-    "end": "2025-08-21T22:00:00"
-  },
-  {
-    "id": "WO-036",
-    "vehicleId": "V010",
-    "title": "PM follow-up: transmission",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "transmission",
+    "subsystem": "engine",
     "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Transmission Jack",
-      "Torque Wrench"
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
     ],
-    "parts": [
-      {
-        "partId": "P-401",
-        "qty": 1
-      }
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T22:00:00.000Z"
+  },
+  {
+    "id": "WO-036",
+    "vehicleId": "V009",
+    "title": "Cooling PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
     ],
-    "created": "2025-08-15T00:00:00"
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-25T20:00:00.000Z",
+    "end": "2025-08-25T22:00:00.000Z"
   },
   {
     "id": "WO-037",
+    "vehicleId": "V009",
+    "title": "Minor corrective: cooling",
+    "type": "Corrective",
+    "priority": "Low",
+    "status": "Open",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [
+      {
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z"
+  },
+  {
+    "id": "WO-038",
+    "vehicleId": "V010",
+    "title": "Brakes PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-26T20:00:00.000Z",
+    "end": "2025-08-26T22:00:00.000Z"
+  },
+  {
+    "id": "WO-039",
+    "vehicleId": "V010",
+    "title": "Engine PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "engine",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-27T20:00:00.000Z",
+    "end": "2025-08-27T22:00:00.000Z"
+  },
+  {
+    "id": "WO-040",
     "vehicleId": "V010",
     "title": "Minor corrective: cooling",
     "type": "Corrective",
@@ -973,152 +988,65 @@
     ],
     "parts": [
       {
-        "partId": "P-221",
+        "partId": "P-113",
         "qty": 1
       },
       {
-        "partId": "P-113",
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-038",
-    "vehicleId": "V011",
-    "title": "Electrical System Audit",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "electrical",
-    "hours": 2,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techF",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-22T19:00:00",
-    "end": "2025-08-22T21:00:00"
-  },
-  {
-    "id": "WO-039",
-    "vehicleId": "V011",
-    "title": "Electrical System Audit",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "electrical",
-    "hours": 2,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techE",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-23T19:00:00",
-    "end": "2025-08-23T21:00:00"
-  },
-  {
-    "id": "WO-040",
-    "vehicleId": "V011",
-    "title": "PM follow-up: electrical",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 1,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-041",
-    "vehicleId": "V011",
-    "title": "Minor corrective: engine",
-    "type": "Corrective",
+    "vehicleId": "V013",
+    "title": "Brakes PM service",
+    "type": "Preventive",
     "priority": "Low",
-    "status": "Open",
-    "subsystem": "engine",
+    "status": "Scheduled",
+    "subsystem": "brakes",
     "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
+      "Torque Wrench",
+      "Brake Bleeder Kit"
     ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-28T20:00:00.000Z",
+    "end": "2025-08-28T22:00:00.000Z"
   },
   {
     "id": "WO-042",
-    "vehicleId": "V012",
-    "title": "Brake Inspection",
+    "vehicleId": "V013",
+    "title": "Cooling PM service",
     "type": "Preventive",
-    "priority": "Medium",
+    "priority": "Low",
     "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
+    "subsystem": "cooling",
+    "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techB",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-17T19:00:00",
-    "end": "2025-08-17T22:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-22T20:00:00.000Z",
+    "end": "2025-08-22T22:00:00.000Z"
   },
   {
     "id": "WO-043",
-    "vehicleId": "V012",
-    "title": "PM short: brakes",
-    "type": "Preventive",
+    "vehicleId": "V013",
+    "title": "Minor corrective: brakes",
+    "type": "Corrective",
     "priority": "Low",
-    "status": "Scheduled",
+    "status": "Open",
     "subsystem": "brakes",
     "hours": 2,
     "requiredSkills": [
@@ -1134,184 +1062,257 @@
         "qty": 1
       }
     ],
-    "technicianId": "techC",
-    "created": "2025-08-15T00:00:00",
-    "start": "2025-08-18T19:00:00",
-    "end": "2025-08-18T21:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-044",
-    "vehicleId": "V012",
-    "title": "Minor corrective: electrical",
-    "type": "Corrective",
+    "vehicleId": "V014",
+    "title": "Engine PM service",
+    "type": "Preventive",
     "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
+    "status": "Scheduled",
+    "subsystem": "engine",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
     ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-23T20:00:00.000Z",
+    "end": "2025-08-23T22:00:00.000Z"
   },
   {
     "id": "WO-045",
-    "vehicleId": "V013",
-    "title": "Restore to service - electrical",
-    "type": "Corrective",
-    "priority": "High",
-    "status": "In Progress",
-    "subsystem": "electrical",
-    "hours": 4,
+    "vehicleId": "V014",
+    "title": "Transmission PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "transmission",
+    "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Transmission Jack",
+      "Seal Driver"
     ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techE",
-    "created": "2025-08-16T00:00:00",
-    "start": "2025-08-17T09:00:00",
-    "end": "2025-08-17T13:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T22:00:00.000Z"
   },
   {
     "id": "WO-046",
-    "vehicleId": "V013",
-    "title": "Electrical System Audit",
-    "type": "Preventive",
-    "priority": "Medium",
-    "status": "Scheduled",
-    "subsystem": "electrical",
+    "vehicleId": "V014",
+    "title": "Minor corrective: brakes",
+    "type": "Corrective",
+    "priority": "Low",
+    "status": "Open",
+    "subsystem": "brakes",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Torque Wrench",
+      "Brake Bleeder Kit"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-201",
         "qty": 1
       }
     ],
-    "technicianId": "techE",
-    "created": "2025-08-15T00:00:00",
-    "start": "2025-08-19T19:00:00",
-    "end": "2025-08-19T21:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-047",
-    "vehicleId": "V013",
-    "title": "PM follow-up: electrical",
+    "vehicleId": "V015",
+    "title": "Brakes PM service",
     "type": "Preventive",
     "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 1,
+    "status": "Scheduled",
+    "subsystem": "brakes",
+    "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Torque Wrench",
+      "Brake Bleeder Kit"
     ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-25T20:00:00.000Z",
+    "end": "2025-08-25T22:00:00.000Z"
   },
   {
     "id": "WO-048",
-    "vehicleId": "V014",
-    "title": "Cooling System Service",
+    "vehicleId": "V015",
+    "title": "Transmission PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
-    "subsystem": "cooling",
+    "subsystem": "transmission",
     "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Coolant Pressure Tester",
-      "Hose Clamp Pliers"
+      "Transmission Jack",
+      "Seal Driver"
     ],
-    "parts": [
-      {
-        "partId": "P-221",
-        "qty": 1
-      },
-      {
-        "partId": "P-113",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techD",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-20T19:00:00",
-    "end": "2025-08-20T21:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-26T20:00:00.000Z",
+    "end": "2025-08-26T22:00:00.000Z"
   },
   {
     "id": "WO-049",
-    "vehicleId": "V014",
-    "title": "Cooling System Service",
-    "type": "Preventive",
+    "vehicleId": "V015",
+    "title": "Minor corrective: brakes",
+    "type": "Corrective",
     "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "cooling",
+    "status": "Open",
+    "subsystem": "brakes",
     "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Coolant Pressure Tester",
-      "Hose Clamp Pliers"
+      "Torque Wrench",
+      "Brake Bleeder Kit"
     ],
     "parts": [
       {
-        "partId": "P-221",
-        "qty": 1
-      },
-      {
-        "partId": "P-113",
+        "partId": "P-201",
         "qty": 1
       }
     ],
-    "technicianId": "techD",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-21T19:00:00",
-    "end": "2025-08-21T21:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-050",
-    "vehicleId": "V014",
-    "title": "PM follow-up: cooling",
+    "vehicleId": "V016",
+    "title": "Brakes PM service",
     "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-27T20:00:00.000Z",
+    "end": "2025-08-27T22:00:00.000Z"
+  },
+  {
+    "id": "WO-051",
+    "vehicleId": "V016",
+    "title": "Cooling PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-28T20:00:00.000Z",
+    "end": "2025-08-28T22:00:00.000Z"
+  },
+  {
+    "id": "WO-052",
+    "vehicleId": "V016",
+    "title": "Minor corrective: brakes",
+    "type": "Corrective",
+    "priority": "Low",
+    "status": "Open",
+    "subsystem": "brakes",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Torque Wrench",
+      "Brake Bleeder Kit"
+    ],
+    "parts": [
+      {
+        "partId": "P-201",
+        "qty": 1
+      }
+    ],
+    "created": "2025-08-21T01:00:00.000Z"
+  },
+  {
+    "id": "WO-053",
+    "vehicleId": "V017",
+    "title": "Cooling PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "cooling",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-22T20:00:00.000Z",
+    "end": "2025-08-22T22:00:00.000Z"
+  },
+  {
+    "id": "WO-054",
+    "vehicleId": "V017",
+    "title": "Engine PM service",
+    "type": "Preventive",
+    "priority": "Low",
+    "status": "Scheduled",
+    "subsystem": "engine",
+    "hours": 2,
+    "requiredSkills": [
+      "Mechanic"
+    ],
+    "tools": [
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
+    ],
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-23T20:00:00.000Z",
+    "end": "2025-08-23T22:00:00.000Z"
+  },
+  {
+    "id": "WO-055",
+    "vehicleId": "V017",
+    "title": "Minor corrective: cooling",
+    "type": "Corrective",
     "priority": "Low",
     "status": "Open",
     "subsystem": "cooling",
-    "hours": 1,
+    "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
@@ -1321,179 +1322,44 @@
     ],
     "parts": [
       {
-        "partId": "P-221",
+        "partId": "P-113",
         "qty": 1
       },
       {
-        "partId": "P-113",
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "created": "2025-08-15T00:00:00"
-  },
-  {
-    "id": "WO-051",
-    "vehicleId": "V014",
-    "title": "Minor corrective: brakes",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-052",
-    "vehicleId": "V015",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Medium",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techB",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-22T19:00:00",
-    "end": "2025-08-22T22:00:00"
-  },
-  {
-    "id": "WO-053",
-    "vehicleId": "V015",
-    "title": "PM short: brakes",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techD",
-    "created": "2025-08-15T00:00:00",
-    "start": "2025-08-23T19:00:00",
-    "end": "2025-08-23T21:00:00"
-  },
-  {
-    "id": "WO-054",
-    "vehicleId": "V015",
-    "title": "Minor corrective: brakes",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-055",
-    "vehicleId": "V016",
-    "title": "Transmission Check",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "transmission",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Transmission Jack",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-401",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techD",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-17T19:00:00",
-    "end": "2025-08-17T22:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-056",
-    "vehicleId": "V016",
-    "title": "Transmission Check",
+    "vehicleId": "V019",
+    "title": "Engine PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
-    "subsystem": "transmission",
-    "hours": 3,
+    "subsystem": "engine",
+    "hours": 2,
     "requiredSkills": [
       "Mechanic"
     ],
     "tools": [
-      "Transmission Jack",
-      "Torque Wrench"
+      "Diagnostic Scanner",
+      "Harness Crimping Set"
     ],
-    "parts": [
-      {
-        "partId": "P-401",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techC",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-18T19:00:00",
-    "end": "2025-08-18T22:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T22:00:00.000Z"
   },
   {
     "id": "WO-057",
-    "vehicleId": "V016",
-    "title": "PM follow-up: transmission",
+    "vehicleId": "V019",
+    "title": "Transmission PM service",
     "type": "Preventive",
     "priority": "Low",
-    "status": "Open",
+    "status": "Scheduled",
     "subsystem": "transmission",
     "hours": 2,
     "requiredSkills": [
@@ -1501,121 +1367,86 @@
     ],
     "tools": [
       "Transmission Jack",
-      "Torque Wrench"
+      "Seal Driver"
     ],
-    "parts": [
-      {
-        "partId": "P-401",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-25T20:00:00.000Z",
+    "end": "2025-08-25T22:00:00.000Z"
   },
   {
     "id": "WO-058",
-    "vehicleId": "V016",
-    "title": "Minor corrective: electrical",
+    "vehicleId": "V019",
+    "title": "Minor corrective: cooling",
     "type": "Corrective",
     "priority": "Low",
     "status": "Open",
-    "subsystem": "electrical",
+    "subsystem": "cooling",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Coolant Pressure Tester",
+      "Hose Clamp Pliers"
     ],
     "parts": [
       {
-        "partId": "P-310",
+        "partId": "P-113",
+        "qty": 1
+      },
+      {
+        "partId": "P-221",
         "qty": 1
       }
     ],
-    "created": "2025-08-16T00:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
     "id": "WO-059",
-    "vehicleId": "V017",
-    "title": "Electrical System Audit",
+    "vehicleId": "V020",
+    "title": "Transmission PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
-    "subsystem": "electrical",
+    "subsystem": "transmission",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Transmission Jack",
+      "Seal Driver"
     ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techE",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-19T19:00:00",
-    "end": "2025-08-19T21:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-26T20:00:00.000Z",
+    "end": "2025-08-26T22:00:00.000Z"
   },
   {
     "id": "WO-060",
-    "vehicleId": "V017",
-    "title": "Electrical System Audit",
+    "vehicleId": "V020",
+    "title": "Brakes PM service",
     "type": "Preventive",
     "priority": "Low",
     "status": "Scheduled",
-    "subsystem": "electrical",
+    "subsystem": "brakes",
     "hours": 2,
     "requiredSkills": [
-      "AutoElec"
+      "Mechanic"
     ],
     "tools": [
-      "Multimeter",
-      "Crimping Tool"
+      "Torque Wrench",
+      "Brake Bleeder Kit"
     ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techF",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-20T19:00:00",
-    "end": "2025-08-20T21:00:00"
+    "parts": [],
+    "created": "2025-08-20T01:00:00.000Z",
+    "start": "2025-08-27T20:00:00.000Z",
+    "end": "2025-08-27T22:00:00.000Z"
   },
   {
     "id": "WO-061",
-    "vehicleId": "V017",
-    "title": "PM follow-up: electrical",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 1,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
-  },
-  {
-    "id": "WO-062",
-    "vehicleId": "V017",
+    "vehicleId": "V020",
     "title": "Minor corrective: brakes",
     "type": "Corrective",
     "priority": "Low",
@@ -1635,292 +1466,10 @@
         "qty": 1
       }
     ],
-    "created": "2025-08-16T00:00:00"
+    "created": "2025-08-21T01:00:00.000Z"
   },
   {
-    "id": "WO-063",
-    "vehicleId": "V018",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Medium",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techB",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-21T19:00:00",
-    "end": "2025-08-21T22:00:00"
-  },
-  {
-    "id": "WO-064",
-    "vehicleId": "V018",
-    "title": "PM short: brakes",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techD",
-    "created": "2025-08-15T00:00:00",
-    "start": "2025-08-22T19:00:00",
-    "end": "2025-08-22T21:00:00"
-  },
-  {
-    "id": "WO-065",
-    "vehicleId": "V018",
-    "title": "Minor corrective: transmission",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "transmission",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Transmission Jack",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-401",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-066",
-    "vehicleId": "V019",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techD",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-23T19:00:00",
-    "end": "2025-08-23T22:00:00"
-  },
-  {
-    "id": "WO-067",
-    "vehicleId": "V019",
-    "title": "Brake Inspection",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "brakes",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techA",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-17T19:00:00",
-    "end": "2025-08-17T22:00:00"
-  },
-  {
-    "id": "WO-068",
-    "vehicleId": "V019",
-    "title": "PM follow-up: brakes",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "brakes",
-    "hours": 2,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Torque Wrench",
-      "Brake Bleeder Kit"
-    ],
-    "parts": [
-      {
-        "partId": "P-201",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
-  },
-  {
-    "id": "WO-069",
-    "vehicleId": "V019",
-    "title": "Minor corrective: electrical",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 2,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-070",
-    "vehicleId": "V020",
-    "title": "Engine Inspection",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "engine",
-    "hours": 4,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techD",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-18T19:00:00",
-    "end": "2025-08-18T23:00:00"
-  },
-  {
-    "id": "WO-071",
-    "vehicleId": "V020",
-    "title": "Engine Inspection",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Scheduled",
-    "subsystem": "engine",
-    "hours": 4,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "technicianId": "techA",
-    "created": "2025-08-14T00:00:00",
-    "start": "2025-08-19T19:00:00",
-    "end": "2025-08-19T23:00:00"
-  },
-  {
-    "id": "WO-072",
-    "vehicleId": "V020",
-    "title": "PM follow-up: engine",
-    "type": "Preventive",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "engine",
-    "hours": 3,
-    "requiredSkills": [
-      "Mechanic"
-    ],
-    "tools": [
-      "Diagnostic Scanner",
-      "Torque Wrench"
-    ],
-    "parts": [
-      {
-        "partId": "P-501",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-15T00:00:00"
-  },
-  {
-    "id": "WO-073",
-    "vehicleId": "V020",
-    "title": "Minor corrective: electrical",
-    "type": "Corrective",
-    "priority": "Low",
-    "status": "Open",
-    "subsystem": "electrical",
-    "hours": 2,
-    "requiredSkills": [
-      "AutoElec"
-    ],
-    "tools": [
-      "Multimeter",
-      "Crimping Tool"
-    ],
-    "parts": [
-      {
-        "partId": "P-310",
-        "qty": 1
-      }
-    ],
-    "created": "2025-08-16T00:00:00"
-  },
-  {
-    "id": "WO-074",
+    "id": "WO-062",
     "vehicleId": "V001",
     "title": "Monthly General Inspection",
     "type": "Preventive",
@@ -1935,14 +1484,13 @@
       "Flashlight",
       "Inspection Mirror"
     ],
-    "parts": null,
-    "technicianId": "techB",
-    "created": "2025-08-16T00:00:00",
-    "start": "2025-08-17T19:00:00",
-    "end": "2025-08-17T20:00:00"
+    "parts": [],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-22T20:00:00.000Z",
+    "end": "2025-08-22T21:00:00.000Z"
   },
   {
-    "id": "WO-075",
+    "id": "WO-063",
     "vehicleId": "V002",
     "title": "Monthly General Inspection",
     "type": "Preventive",
@@ -1957,14 +1505,13 @@
       "Flashlight",
       "Inspection Mirror"
     ],
-    "parts": null,
-    "technicianId": "techD",
-    "created": "2025-08-16T00:00:00",
-    "start": "2025-08-18T19:00:00",
-    "end": "2025-08-18T20:00:00"
+    "parts": [],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-23T20:00:00.000Z",
+    "end": "2025-08-23T21:00:00.000Z"
   },
   {
-    "id": "WO-076",
+    "id": "WO-064",
     "vehicleId": "V003",
     "title": "Monthly General Inspection",
     "type": "Preventive",
@@ -1979,14 +1526,13 @@
       "Flashlight",
       "Inspection Mirror"
     ],
-    "parts": null,
-    "technicianId": "techA",
-    "created": "2025-08-16T00:00:00",
-    "start": "2025-08-19T19:00:00",
-    "end": "2025-08-19T20:00:00"
+    "parts": [],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-24T20:00:00.000Z",
+    "end": "2025-08-24T21:00:00.000Z"
   },
   {
-    "id": "WO-077",
+    "id": "WO-065",
     "vehicleId": "V004",
     "title": "Monthly General Inspection",
     "type": "Preventive",
@@ -2001,14 +1547,13 @@
       "Flashlight",
       "Inspection Mirror"
     ],
-    "parts": null,
-    "technicianId": "techD",
-    "created": "2025-08-16T00:00:00",
-    "start": "2025-08-20T19:00:00",
-    "end": "2025-08-20T20:00:00"
+    "parts": [],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-25T20:00:00.000Z",
+    "end": "2025-08-25T21:00:00.000Z"
   },
   {
-    "id": "WO-078",
+    "id": "WO-066",
     "vehicleId": "V005",
     "title": "Monthly General Inspection",
     "type": "Preventive",
@@ -2023,10 +1568,9 @@
       "Flashlight",
       "Inspection Mirror"
     ],
-    "parts": null,
-    "technicianId": "techC",
-    "created": "2025-08-16T00:00:00",
-    "start": "2025-08-21T19:00:00",
-    "end": "2025-08-21T20:00:00"
+    "parts": [],
+    "created": "2025-08-21T01:00:00.000Z",
+    "start": "2025-08-26T20:00:00.000Z",
+    "end": "2025-08-26T21:00:00.000Z"
   }
 ]

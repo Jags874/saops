@@ -1,1304 +1,1661 @@
 [
   {
-    "vehicleId": "V016",
+    "vehicleId": "V015",
     "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-04-19T09:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V016",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-04-20T03:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V009",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-04-20T07:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-04-20T22:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-04-20T23:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V014",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-04-21T01:00:00",
+    "failure_mode": "overheat warning",
+    "date": "2025-02-25T13:00:00.000Z",
     "downtime_hours": 7
   },
   {
-    "vehicleId": "V008",
+    "vehicleId": "V004",
     "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-04-22T18:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-04-22T21:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-04-22T21:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-04-22T23:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V020",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-04-23T15:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V002",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-04-24T04:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V013",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-04-26T02:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-04-26T21:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-04-27T16:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-04-27T21:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-04-28T08:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-04-28T10:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V009",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-04-29T10:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-05-01T06:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-05-01T12:00:00",
-    "downtime_hours": 10
+    "failure_mode": "ECU reboot",
+    "date": "2025-02-28T04:00:00.000Z",
+    "downtime_hours": 7
   },
   {
     "vehicleId": "V016",
     "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-05-02T12:00:00",
-    "downtime_hours": 4
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-05-05T02:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V008",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-05-05T08:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-05-05T10:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V008",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-05-05T16:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-05-06T21:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-05-06T21:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-07T07:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V020",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-05-07T15:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-08T04:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-05-08T07:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-05-08T13:00:00",
-    "downtime_hours": 4
-  },
-  {
-    "vehicleId": "V013",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-05-08T20:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V012",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-05-09T02:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V013",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-05-09T02:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-05-09T07:00:00",
+    "failure_mode": "clutch slip",
+    "date": "2025-03-02T08:00:00.000Z",
     "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-05-09T07:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-05-09T10:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V008",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-05-09T17:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-09T23:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-05-11T03:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V017",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-05-11T12:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-05-12T04:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-05-12T05:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V017",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-12T10:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-05-12T13:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-05-13T09:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-05-14T02:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V013",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-05-14T09:00:00",
-    "downtime_hours": 10
   },
   {
     "vehicleId": "V010",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-05-15T19:00:00",
-    "downtime_hours": 4
-  },
-  {
-    "vehicleId": "V004",
     "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-05-15T21:00:00",
+    "failure_mode": "fluid temp high",
+    "date": "2025-03-06T11:00:00.000Z",
     "downtime_hours": 7
   },
   {
-    "vehicleId": "V006",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-05-18T00:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V004",
+    "vehicleId": "V009",
     "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-05-19T08:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-05-19T10:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V014",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-20T07:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-05-22T01:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-05-22T03:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-05-22T07:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-05-22T13:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-05-22T22:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-05-23T00:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-05-23T01:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-05-23T06:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V014",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-23T10:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-25T12:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V006",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-05-25T23:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-05-26T07:00:00",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-03-06T20:00:00.000Z",
     "downtime_hours": 4
   },
   {
-    "vehicleId": "V008",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-05-26T11:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V018",
-    "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-05-26T14:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-05-27T10:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V013",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-05-27T15:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-05-27T22:00:00",
+    "vehicleId": "V002",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-03-14T00:00:00.000Z",
     "downtime_hours": 3
   },
   {
-    "vehicleId": "V002",
+    "vehicleId": "V004",
     "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-05-28T17:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V008",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-05-28T20:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V008",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-05-29T13:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-05-29T17:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-05-30T00:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-05-30T13:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V006",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-05-30T22:00:00",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-03-16T17:00:00.000Z",
     "downtime_hours": 4
   },
   {
-    "vehicleId": "V009",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-06-01T04:00:00",
-    "downtime_hours": 8
+    "vehicleId": "V001",
+    "subsystem": "electrical",
+    "failure_mode": "alternator spike",
+    "date": "2025-03-16T20:00:00.000Z",
+    "downtime_hours": 5
   },
   {
-    "vehicleId": "V001",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-06-01T17:00:00",
-    "downtime_hours": 9
+    "vehicleId": "V004",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-03-17T17:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V006",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-03-17T17:00:00.000Z",
+    "downtime_hours": 4
   },
   {
     "vehicleId": "V002",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-06-01T19:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-06-01T23:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-06-03T06:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V009",
     "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-06-04T17:00:00",
+    "failure_mode": "gear selection fault",
+    "date": "2025-03-18T14:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-03-19T10:00:00.000Z",
     "downtime_hours": 4
   },
   {
     "vehicleId": "V017",
     "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-06-05T03:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "engine",
-    "failure_mode": "seal",
-    "date": "2025-06-05T14:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-06-06T05:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V018",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-06-08T00:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-06-08T02:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-06-08T08:00:00",
+    "failure_mode": "pump failure",
+    "date": "2025-03-21T09:00:00.000Z",
     "downtime_hours": 5
   },
   {
-    "vehicleId": "V001",
+    "vehicleId": "V006",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-03-22T15:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V011",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-03-23T19:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V008",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-03-24T03:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-03-24T17:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V014",
     "subsystem": "cooling",
     "failure_mode": "pump failure",
-    "date": "2025-06-10T00:00:00",
+    "date": "2025-03-25T12:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V006",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-03-26T17:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V003",
+    "subsystem": "electrical",
+    "failure_mode": "alternator spike",
+    "date": "2025-03-27T03:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-03-27T17:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-03-28T09:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V008",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-03-29T15:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V014",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-03-29T18:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-03-29T23:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V011",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-04-01T20:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V011",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-04-02T13:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-04-04T15:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-04-04T22:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V004",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-04-05T19:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-04-05T22:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "brakes",
+    "failure_mode": "line leak",
+    "date": "2025-04-06T10:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V002",
+    "subsystem": "electrical",
+    "failure_mode": "alternator spike",
+    "date": "2025-04-06T12:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-04-06T20:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-04-06T22:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V004",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-04-11T15:00:00.000Z",
     "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "electrical",
+    "failure_mode": "alternator spike",
+    "date": "2025-04-12T04:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-04-12T05:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-04-13T07:00:00.000Z",
+    "downtime_hours": 5
   },
   {
     "vehicleId": "V016",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-06-10T05:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-06-10T07:00:00",
-    "downtime_hours": 4
-  },
-  {
-    "vehicleId": "V020",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-06-10T08:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V012",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-06-12T07:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V011",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-06-12T19:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V006",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-06-13T13:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V017",
     "subsystem": "brakes",
     "failure_mode": "caliper stick",
-    "date": "2025-06-13T19:00:00",
-    "downtime_hours": 4
+    "date": "2025-04-14T16:00:00.000Z",
+    "downtime_hours": 3
   },
   {
-    "vehicleId": "V004",
+    "vehicleId": "V003",
     "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-06-14T20:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-06-15T06:00:00",
+    "failure_mode": "ECU reboot",
+    "date": "2025-04-14T17:00:00.000Z",
     "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-06-15T10:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V015",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-06-15T23:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V002",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-06-16T07:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V010",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-06-17T00:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-06-18T02:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V012",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-06-18T03:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V006",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-06-18T23:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V018",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-06-19T06:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-06-19T07:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V012",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-06-19T09:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V010",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-06-19T10:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-06-20T08:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V016",
-    "subsystem": "engine",
-    "failure_mode": "seal",
-    "date": "2025-06-20T19:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-06-20T21:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-06-21T11:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-06-21T15:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-06-21T16:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V020",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-06-21T21:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V010",
-    "subsystem": "engine",
-    "failure_mode": "seal",
-    "date": "2025-06-22T20:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V008",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-06-23T06:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-06-25T08:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V002",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-06-25T22:00:00",
-    "downtime_hours": 4
-  },
-  {
-    "vehicleId": "V010",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-06-25T22:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V017",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-06-27T07:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V012",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-06-27T13:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V012",
-    "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-06-27T16:00:00",
-    "downtime_hours": 2
   },
   {
     "vehicleId": "V009",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-06-28T22:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V008",
     "subsystem": "brakes",
     "failure_mode": "line leak",
-    "date": "2025-06-29T09:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-07-01T18:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-07-02T02:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V018",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-07-04T01:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V009",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-07-04T11:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V006",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-07-04T13:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-07-05T12:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-07-06T04:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-07-06T19:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V002",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-07-07T00:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-07-09T05:00:00",
-    "downtime_hours": 2
-  },
-  {
-    "vehicleId": "V010",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-07-09T20:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-07-13T03:00:00",
-    "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V020",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-07-13T11:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-07-14T09:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V017",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-07-14T12:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-07-15T14:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V014",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-07-15T15:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V017",
-    "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-07-16T03:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-07-16T15:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-07-18T02:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V020",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-07-19T12:00:00",
-    "downtime_hours": 9
+    "date": "2025-04-15T01:00:00.000Z",
+    "downtime_hours": 1
   },
   {
     "vehicleId": "V005",
     "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-07-20T20:00:00",
-    "downtime_hours": 3
-  },
-  {
-    "vehicleId": "V010",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-07-21T08:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V001",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-07-21T22:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-07-23T01:00:00",
-    "downtime_hours": 9
-  },
-  {
-    "vehicleId": "V013",
-    "subsystem": "cooling",
-    "failure_mode": "pump failure",
-    "date": "2025-07-23T05:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V006",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-07-23T17:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V008",
-    "subsystem": "brakes",
     "failure_mode": "pad wear",
-    "date": "2025-07-23T21:00:00",
+    "date": "2025-04-15T20:00:00.000Z",
     "downtime_hours": 7
-  },
-  {
-    "vehicleId": "V004",
-    "subsystem": "brakes",
-    "failure_mode": "pad wear",
-    "date": "2025-07-26T07:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V018",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-07-26T10:00:00",
-    "downtime_hours": 12
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "engine",
-    "failure_mode": "overheat",
-    "date": "2025-07-26T12:00:00",
-    "downtime_hours": 10
-  },
-  {
-    "vehicleId": "V019",
-    "subsystem": "brakes",
-    "failure_mode": "caliper stick",
-    "date": "2025-07-27T23:00:00",
-    "downtime_hours": 6
-  },
-  {
-    "vehicleId": "V006",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-07-28T01:00:00",
-    "downtime_hours": 3
   },
   {
     "vehicleId": "V013",
     "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-07-28T03:00:00",
-    "downtime_hours": 8
+    "failure_mode": "fluid temp high",
+    "date": "2025-04-17T04:00:00.000Z",
+    "downtime_hours": 1
   },
   {
-    "vehicleId": "V011",
+    "vehicleId": "V001",
     "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-07-30T04:00:00",
-    "downtime_hours": 8
+    "failure_mode": "clutch slip",
+    "date": "2025-04-19T00:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-04-19T19:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-04-20T09:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-04-20T12:00:00.000Z",
+    "downtime_hours": 5
   },
   {
     "vehicleId": "V004",
     "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-07-30T11:00:00",
-    "downtime_hours": 5
-  },
-  {
-    "vehicleId": "V017",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-07-30T15:00:00",
-    "downtime_hours": 11
-  },
-  {
-    "vehicleId": "V007",
-    "subsystem": "cooling",
-    "failure_mode": "hose leak",
-    "date": "2025-07-30T17:00:00",
-    "downtime_hours": 8
-  },
-  {
-    "vehicleId": "V014",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-08-01T02:00:00",
-    "downtime_hours": 4
-  },
-  {
-    "vehicleId": "V005",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-08-01T06:00:00",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-04-22T02:00:00.000Z",
     "downtime_hours": 7
   },
   {
-    "vehicleId": "V010",
-    "subsystem": "transmission",
-    "failure_mode": "seal",
-    "date": "2025-08-02T00:00:00",
-    "downtime_hours": 11
+    "vehicleId": "V001",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-04-22T19:00:00.000Z",
+    "downtime_hours": 5
   },
   {
-    "vehicleId": "V011",
-    "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-08-02T02:00:00",
-    "downtime_hours": 8
+    "vehicleId": "V020",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-04-24T11:00:00.000Z",
+    "downtime_hours": 4
   },
   {
     "vehicleId": "V007",
     "subsystem": "cooling",
     "failure_mode": "pump failure",
-    "date": "2025-08-03T02:00:00",
+    "date": "2025-04-24T13:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V011",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-04-25T07:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-04-25T14:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-04-27T05:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V009",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-04-27T06:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V017",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-04-28T01:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-04-28T13:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-04-28T16:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "electrical",
+    "failure_mode": "wiring fault",
+    "date": "2025-04-28T22:00:00.000Z",
     "downtime_hours": 6
   },
   {
     "vehicleId": "V014",
     "subsystem": "brakes",
     "failure_mode": "line leak",
-    "date": "2025-08-03T18:00:00",
-    "downtime_hours": 3
+    "date": "2025-05-01T06:00:00.000Z",
+    "downtime_hours": 7
   },
   {
-    "vehicleId": "V013",
-    "subsystem": "engine",
-    "failure_mode": "seal",
-    "date": "2025-08-06T20:00:00",
+    "vehicleId": "V004",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-05-02T07:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-05-02T19:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V003",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-05-03T01:00:00.000Z",
     "downtime_hours": 5
   },
   {
     "vehicleId": "V006",
-    "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-08-07T19:00:00",
-    "downtime_hours": 12
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-05-04T03:00:00.000Z",
+    "downtime_hours": 8
   },
   {
-    "vehicleId": "V003",
-    "subsystem": "brakes",
-    "failure_mode": "line leak",
-    "date": "2025-08-09T04:00:00",
-    "downtime_hours": 9
+    "vehicleId": "V019",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-05-04T18:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-05-05T12:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-05-05T13:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-05-06T02:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-05-07T08:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V014",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-05-09T00:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V008",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-05-10T12:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-05-10T14:00:00.000Z",
+    "downtime_hours": 5
   },
   {
     "vehicleId": "V015",
     "subsystem": "electrical",
-    "failure_mode": "wiring fault",
-    "date": "2025-08-10T09:00:00",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-05-12T02:00:00.000Z",
     "downtime_hours": 3
   },
   {
-    "vehicleId": "V016",
-    "subsystem": "engine",
-    "failure_mode": "sensor",
-    "date": "2025-08-12T23:00:00",
-    "downtime_hours": 4
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-05-12T08:00:00.000Z",
+    "downtime_hours": 3
   },
   {
-    "vehicleId": "V013",
-    "subsystem": "electrical",
-    "failure_mode": "alternator",
-    "date": "2025-08-13T23:00:00",
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-05-14T23:00:00.000Z",
     "downtime_hours": 5
   },
   {
-    "vehicleId": "V006",
-    "subsystem": "transmission",
-    "failure_mode": "bearing",
-    "date": "2025-08-14T15:00:00",
-    "downtime_hours": 8
+    "vehicleId": "V014",
+    "subsystem": "brakes",
+    "failure_mode": "line leak",
+    "date": "2025-05-16T23:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-05-17T02:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-05-21T09:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-05-23T00:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "throttle response lag",
+    "date": "2025-05-23T17:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V002",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-05-25T01:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-05-25T04:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V017",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-05-25T15:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "throttle response lag",
+    "date": "2025-05-25T23:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V011",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-05-27T21:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-05-28T14:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V014",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-05-29T10:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V008",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-05-29T20:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V008",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-05-30T14:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-05-31T15:00:00.000Z",
+    "downtime_hours": 2
   },
   {
     "vehicleId": "V020",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-06-01T00:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V012",
     "subsystem": "electrical",
-    "failure_mode": "sensor",
-    "date": "2025-08-14T16:00:00",
+    "failure_mode": "alternator spike",
+    "date": "2025-06-01T04:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V009",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-06-01T15:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-06-01T21:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-06-02T13:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V009",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-06-02T15:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-06-03T23:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-06-05T22:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-06-06T13:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-06-07T07:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-06-07T07:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V004",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-06-07T16:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-06-08T02:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "brakes",
+    "failure_mode": "line leak",
+    "date": "2025-06-08T19:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-06-08T19:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V008",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-06-09T02:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "wiring fault near ECU",
+    "date": "2025-06-10T22:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-06-12T04:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-06-12T22:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-06-12T23:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-06-14T12:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-06-14T17:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-06-14T19:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-06-18T04:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-06-19T23:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-06-21T14:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V002",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-06-22T12:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "electrical",
+    "failure_mode": "alternator spike",
+    "date": "2025-06-22T19:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "wiring fault near ECU",
+    "date": "2025-06-27T14:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-06-28T05:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-06-29T05:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-06-29T23:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-06-30T12:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V003",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-06-30T20:00:00.000Z",
     "downtime_hours": 2
   },
   {
     "vehicleId": "V005",
     "subsystem": "brakes",
     "failure_mode": "line leak",
-    "date": "2025-08-14T22:00:00",
-    "downtime_hours": 9
+    "date": "2025-06-30T21:00:00.000Z",
+    "downtime_hours": 7
   },
   {
-    "vehicleId": "V013",
+    "vehicleId": "V009",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-06-30T23:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V012",
     "subsystem": "transmission",
-    "failure_mode": "clutch",
-    "date": "2025-08-14T23:00:00",
+    "failure_mode": "seal weep",
+    "date": "2025-07-01T08:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-07-01T21:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "brakes",
+    "failure_mode": "line leak",
+    "date": "2025-07-03T14:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-07-03T23:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-07-04T01:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-07-05T21:00:00.000Z",
     "downtime_hours": 5
   },
   {
-    "vehicleId": "V018",
-    "subsystem": "engine",
-    "failure_mode": "seal",
-    "date": "2025-08-14T23:00:00",
+    "vehicleId": "V010",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-07-05T21:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-07-06T10:00:00.000Z",
     "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-06T23:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V003",
+    "subsystem": "engine",
+    "failure_mode": "misfire",
+    "date": "2025-07-07T01:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-07-07T09:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V014",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-07T14:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-07-08T21:00:00.000Z",
+    "downtime_hours": 6
   },
   {
     "vehicleId": "V018",
     "subsystem": "cooling",
-    "failure_mode": "thermostat",
-    "date": "2025-08-15T15:00:00",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-07-09T01:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-07-09T04:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V011",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-07-09T04:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V017",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-07-09T05:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-07-09T08:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "engine",
+    "failure_mode": "misfire",
+    "date": "2025-07-09T16:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-07-10T11:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-07-11T00:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-07-11T15:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-07-12T17:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-13T17:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-07-13T18:00:00.000Z",
     "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-07-13T23:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V006",
+    "subsystem": "engine",
+    "failure_mode": "misfire",
+    "date": "2025-07-14T05:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "brakes",
+    "failure_mode": "line leak",
+    "date": "2025-07-14T10:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-07-14T22:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-07-15T06:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-07-15T07:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-15T08:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-07-15T18:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V017",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-07-16T11:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-17T13:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-07-17T13:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V002",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-07-17T21:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V004",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-07-18T12:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-19T01:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-07-19T11:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-07-19T14:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-07-20T04:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-07-20T15:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-07-21T03:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V014",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-07-21T18:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-07-22T08:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-07-22T17:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-07-22T19:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-07-23T10:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-07-25T01:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-25T13:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V002",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-07-26T21:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "engine",
+    "failure_mode": "misfire",
+    "date": "2025-07-27T23:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V017",
+    "subsystem": "brakes",
+    "failure_mode": "line leak",
+    "date": "2025-07-28T05:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V002",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-07-29T04:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "lost comms with ECM (U0100)",
+    "date": "2025-07-29T07:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-07-29T09:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-07-29T12:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "cooling",
+    "failure_mode": "hose leak",
+    "date": "2025-07-30T11:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-07-30T12:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-07-31T16:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "ECU reboot",
+    "date": "2025-07-31T19:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V019",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-08-01T14:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-08-01T18:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-08-03T08:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-08-03T12:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-08-03T14:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-08-04T05:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-08-04T21:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-08-05T12:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-08-06T20:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-08-07T10:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-08-07T10:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V004",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-08-08T07:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-08-08T12:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "electrical",
+    "failure_mode": "alternator spike",
+    "date": "2025-08-08T13:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V008",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-08-08T18:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-08-09T13:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-08-09T23:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-08-10T09:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-08-11T02:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V006",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-08-11T11:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-08-11T12:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-08-11T23:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-08-12T12:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-08-12T17:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "CAN bus dropout",
+    "date": "2025-08-14T06:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "brakes",
+    "failure_mode": "pad wear",
+    "date": "2025-08-14T17:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V012",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-08-14T20:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-08-15T12:00:00.000Z",
+    "downtime_hours": 6
+  },
+  {
+    "vehicleId": "V009",
+    "subsystem": "transmission",
+    "failure_mode": "gear selection fault",
+    "date": "2025-08-16T03:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V003",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-08-16T09:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-08-17T07:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V007",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck open",
+    "date": "2025-08-17T22:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "engine",
+    "failure_mode": "oil pressure low",
+    "date": "2025-08-18T19:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V005",
+    "subsystem": "transmission",
+    "failure_mode": "clutch slip",
+    "date": "2025-08-19T13:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V011",
+    "subsystem": "transmission",
+    "failure_mode": "seal weep",
+    "date": "2025-08-20T09:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V016",
+    "subsystem": "brakes",
+    "failure_mode": "line leak",
+    "date": "2025-08-21T03:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V010",
+    "subsystem": "transmission",
+    "failure_mode": "fluid temp high",
+    "date": "2025-08-21T04:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "cooling",
+    "failure_mode": "pump failure",
+    "date": "2025-08-22T01:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V003",
+    "subsystem": "engine",
+    "failure_mode": "overheat warning",
+    "date": "2025-08-23T13:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-08-24T11:00:00.000Z",
+    "downtime_hours": 4
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "lost comms with ECM (U0100)",
+    "date": "2025-08-25T14:00:00.000Z",
+    "downtime_hours": 2
+  },
+  {
+    "vehicleId": "V001",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-08-25T17:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "lost comms with ECM (U0100)",
+    "date": "2025-08-25T18:00:00.000Z",
+    "downtime_hours": 1
+  },
+  {
+    "vehicleId": "V006",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-08-25T21:00:00.000Z",
+    "downtime_hours": 5
+  },
+  {
+    "vehicleId": "V015",
+    "subsystem": "brakes",
+    "failure_mode": "caliper stick",
+    "date": "2025-08-26T14:00:00.000Z",
+    "downtime_hours": 7
+  },
+  {
+    "vehicleId": "V013",
+    "subsystem": "cooling",
+    "failure_mode": "thermostat stuck closed",
+    "date": "2025-08-26T19:00:00.000Z",
+    "downtime_hours": 8
+  },
+  {
+    "vehicleId": "V020",
+    "subsystem": "engine",
+    "failure_mode": "sensor drift",
+    "date": "2025-08-28T08:00:00.000Z",
+    "downtime_hours": 3
+  },
+  {
+    "vehicleId": "V018",
+    "subsystem": "electrical",
+    "failure_mode": "wiring fault near ECU",
+    "date": "2025-08-29T01:00:00.000Z",
+    "downtime_hours": 4
   }
 ]

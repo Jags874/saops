@@ -1,0 +1,48 @@
+Vehicles: vehicles_v3.json
+(Down: V005 engine, V007 thermostat, V011 accident, V018 electrical)
+
+Failures (6 months): failures_v3.json
+
+V005 — increasing engine failures (sensor drift / oil pressure / overheat) → suggests a wiring/harness or thermal issue
+
+V012 — increasing transmission failures (seal/fluid temp/slip) → suggests fluid loss/seal integrity
+
+Thermostats spike across ~10 vehicles in the last 60 days (cooling: “thermostat stuck” open/closed)
+
+V018 — intermittent electrical/performance issues (ECU reboot, CAN dropout, U0100, throttle lag) → points to ECU/grounding root cause
+
+Work Orders (busy upcoming week): workorders_v3.json
+
+V007 (DOWN): “Replace thermostat & coolant flush” (High, In Progress)
+
+V005 (DOWN): “Engine wiring harness replacement” (High, In Progress) + “Engine sensor calibration” (Medium, Scheduled)
+
+V011 (DOWN): accident repair (High, In Progress)
+
+V018 (DOWN): “ECU replacement & reflash; inspect grounds” (High, In Progress)
+
+V012 (rising transmission issues): “Transmission seal kit & fluid service” (Medium, Scheduled) + clutch pack inspection
+
+Multiple thermostat replacements scheduled across other vehicles
+
+Extra PMs + minor corrective items to keep the fleet busy, placed mostly at night (19:00+) to avoid ops
+
+Done! I’ve regenerated condition.json to reflect the new reliability trends and the 4 “DOWN” cases.
+
+What’s included
+
+6 months of weekly snapshots (27 weeks) for all 20 vehicles × 5 subsystems = 2700 entries.
+
+Trends baked in:
+
+V005 (engine) — accelerating decline towards the present.
+
+V012 (transmission) — accelerating decline towards the present.
+
+Thermostat spike — vehicles with recent “thermostat stuck” failures show a sharper cooling decline in the last ~8 weeks.
+
+V018 (electrical/ECU) — oscillating electrical condition with a mild downward trend and a low trough near the demo week.
+
+V011 (accident) — lower engine/cooling condition near the demo week to reflect damage.
+
+All DOWN vehicles have the affected subsystem pushed low in the week around the demo date.

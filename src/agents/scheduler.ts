@@ -1,18 +1,184 @@
 // src/agents/scheduler.ts
-import type { WorkOrder, OpsTask, SchedulerPolicy, Priority, WoType, Skill } from '../types';
+// Greedy, human-friendly scheduler used by the Scheduler Agent.
+// - Understands both availability shapes: { date, hours } or { start, end }
+// - Uses technician skills (Mechanic / AutoElec)
+// - Avoids vehicle ops-tasks overlap when placing maintenance
+// - Returns rationale + moved/scheduled/unscheduled IDs
+
+import type {
+  WorkOrder,
+  OpsTask,
+  Skill,
+  Technician,
+  SchedulerPolicy,
+} from '../types';
 import { getResourceSnapshot } from '../data/resourceStore';
-import { demoNow } from '../utils/demoClock';
+import { getDemoWeekStart } from '../data/adapter';
 
+// ------------------------ helpers ------------------------
 
-// A very small, deterministic scheduler that:
-// - Orders WOs by type/priority and due-ness
-// - Schedules within policy windows (defaults to evenings if avoidOps)
-// - Avoids ops tasks if avoidOps=true
-// - Respects per-day skill capacity from resourceStore availability
-// - Returns a preview with moved/scheduled/unscheduled lists and rationale
+const DAY_MS = 86_400_000;
 
-type Interval = { start: Date; end: Date };
-type PlanResult = {
+const ymdLocal = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+    d.getDate()
+  ).padStart(2, '0')}`;
+
+function localMidnightFromUTCAnchor(iso: string) {
+  const u = new Date(iso);
+  return new Date(
+    u.getUTCFullYear(),
+    u.getUTCMonth(),
+    u.getUTCDate(),
+    0,
+    0,
+    0,
+    0
+  );
+}
+
+function hours(s: Date, e: Date) {
+  return Math.max(0, (e.getTime() - s.getTime()) / 3_600_000);
+}
+
+function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) {
+  return aEnd > bStart && aStart < bEnd;
+}
+
+function requiredSkillsFor(w: any): Skill[] {
+  if (Array.isArray(w?.requiredSkills) && w.requiredSkills.length)
+    return w.requiredSkills as Skill[];
+  // heuristic fallback by subsystem
+  if (String(w?.subsystem || '').toLowerCase().includes('elect'))
+    return ['AutoElec'];
+  return ['Mechanic'];
+}
+
+function durationHoursFor(w: any) {
+  if (typeof w?.hours === 'number' && isFinite(w.hours) && w.hours > 0)
+    return w.hours as number;
+  const s = w?.start ? new Date(w.start) : null;
+  const e = w?.end ? new Date(w.end) : null;
+  if (s && e && isFinite(s.getTime()) && isFinite(e.getTime())) return hours(s, e);
+  return 2; // default slot
+}
+
+// ----------------- availability / capacity -----------------
+
+// Accepts either legacy availability ({ date, hours, technicianId })
+// or interval availability ({ start, end, technicianId })
+type AvailabilitySlot = {
+  technicianId: string;
+  date?: string;
+  hours?: number;
+  start?: string;
+  end?: string;
+};
+
+function buildTechSkillsMap(techs: Technician[]): Map<string, Skill[]> {
+  const map = new Map<string, Skill[]>();
+  for (const t of techs ?? []) {
+    const skills = (t.skills && t.skills.length ? t.skills : ['Mechanic']) as Skill[];
+    map.set(t.id, skills);
+  }
+  return map;
+}
+
+// Build capacity per day per skill: Map<YYYY-MM-DD, Map<Skill, number>>
+export function buildDailyCapacity(
+  availability: AvailabilitySlot[],
+  technicians: Technician[]
+): Map<string, Map<Skill, number>> {
+  const techSkills = buildTechSkillsMap(technicians);
+  const cap = new Map<string, Map<Skill, number>>();
+
+  for (const a of availability ?? []) {
+    // Day key
+    const dayKey =
+      a.date ? a.date.slice(0, 10) : a.start ? ymdLocal(new Date(a.start)) : undefined;
+    if (!dayKey) continue;
+
+    // Hours
+    let hrs = 0;
+    if (typeof a.hours === 'number') {
+      hrs = a.hours;
+    } else if (a.start && a.end) {
+      const s = new Date(a.start);
+      const e = new Date(a.end);
+      if (isFinite(s.getTime()) && isFinite(e.getTime())) {
+        hrs = Math.max(0, (e.getTime() - s.getTime()) / 3_600_000);
+      }
+    }
+
+    const perDay = cap.get(dayKey) ?? new Map<Skill, number>();
+    const skills = techSkills.get(a.technicianId) ?? (['Mechanic'] as Skill[]);
+    for (const sk of skills) {
+      perDay.set(sk, (perDay.get(sk) ?? 0) + hrs);
+    }
+    cap.set(dayKey, perDay);
+  }
+
+  return cap;
+}
+
+// ------------- ops occupancy (vehicle/day intervals) -------------
+
+type Interval = { s: Date; e: Date };
+
+function buildOpsBusyByVehicleDay(ops: OpsTask[]) {
+  // Map<vehicleId, Map<YYYY-MM-DD, Interval[]>>
+  const out = new Map<string, Map<string, Interval[]>>();
+  for (const t of ops ?? []) {
+    if (!t.start || !t.end || !t.vehicleId) continue;
+    const s = new Date(t.start);
+    const e = new Date(t.end);
+    if (!isFinite(s.getTime()) || !isFinite(e.getTime())) continue;
+
+    const day = ymdLocal(new Date(s));
+    const byDay = out.get(t.vehicleId) ?? new Map<string, Interval[]>();
+    const arr = byDay.get(day) ?? [];
+    arr.push({ s, e });
+    byDay.set(day, arr);
+    out.set(t.vehicleId, byDay);
+  }
+  return out;
+}
+
+// Find first placement window on a given day that doesn't overlap ops intervals
+// and returns [start, end] or null.
+function placeOnDayNoOverlap(
+  dayStart: Date,
+  vehicleOps: Interval[] | undefined,
+  wantedHours: number
+): { s: Date; e: Date } | null {
+  // Candidate start times (local working hours)
+  const candidates = [
+    { h: 9, m: 0 },
+    { h: 11, m: 0 },
+    { h: 13, m: 0 },
+    { h: 15, m: 0 },
+    { h: 17, m: 0 }, // if needed
+  ];
+
+  for (const { h, m } of candidates) {
+    const s = new Date(dayStart);
+    s.setHours(h, m, 0, 0);
+    const e = new Date(s);
+    e.setHours(s.getHours() + Math.ceil(wantedHours));
+    const overlapsOps =
+      (vehicleOps ?? []).some((iv) => overlaps(s, e, iv.s, iv.e));
+    if (!overlapsOps) return { s, e };
+  }
+  return null;
+}
+
+// ------------------------ main API ------------------------
+
+export function proposeSchedule(
+  workorders: WorkOrder[],
+  opsTasks: OpsTask[],
+  policy?: SchedulerPolicy
+): {
   workorders: WorkOrder[];
   moved: number;
   scheduled: number;
@@ -21,225 +187,135 @@ type PlanResult = {
   scheduledIds: string[];
   unscheduledIds: string[];
   rationale: string[];
-};
+} {
+  const rationale: string[] = [];
+  const movedIds: string[] = [];
+  const scheduledIds: string[] = [];
+  const unscheduledIds: string[] = [];
 
-const BY_PRIORITY: Priority[] = ['Critical', 'High', 'Medium', 'Low'];
-const BY_TYPE: WoType[] = ['Corrective', 'Preventive'];
+  // Snapshot resources
+  const { technicians, availability } = getResourceSnapshot();
+  const cap = buildDailyCapacity(availability as any, technicians as any);
 
-function iso(d: Date) { return d.toISOString(); }
-function addHours(d: Date, h: number) { const x = new Date(d); x.setHours(x.getHours() + h); return x; }
-function sameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() &&
-         a.getMonth() === b.getMonth() &&
-         a.getDate() === b.getDate();
-}
-function clamp(n: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, n)); }
+  // Ops occupancy per vehicle/day
+  const opsBusy = buildOpsBusyByVehicleDay(opsTasks);
 
-function parseOpsIntervals(ops: OpsTask[]): Map<string, Interval[]> {
-  const map = new Map<string, Interval[]>();
-  for (const t of ops) {
-    const k = t.vehicleId;
-    const list = map.get(k) ?? [];
-    list.push({ start: new Date(t.start), end: new Date(t.end) });
-    map.set(k, list);
-  }
-  return map;
-}
+  // Anchor week (local midnight)
+  const week0 = localMidnightFromUTCAnchor(getDemoWeekStart());
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(week0);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
 
-function overlap(a: Interval, b: Interval) {
-  return a.start < b.end && b.start < a.end;
-}
-
-function hasOverlap(block: Interval, blocks: Interval[]) {
-  for (const b of blocks) {
-    if (overlap(block, b)) return true;
+  // Policy helpers (simple switches)
+// Policy flag (accepts string or object; fully optional)
+const preferAfterOps = (() => {
+  const p: any = policy;
+  if (!p) return false;
+  if (typeof p === 'string') return p === 'prefer_after_ops';
+  if (p && typeof p === 'object') {
+    if (p.kind === 'prefer_after_ops') return true;
+    if (typeof p.preferAfterOps === 'boolean') return p.preferAfterOps;
   }
   return false;
-}
+})();
 
-function dayWindow(date: Date, startHour: number, endHour: number): Interval {
-  const s = new Date(date); s.setHours(startHour, 0, 0, 0);
-  const e = new Date(date); e.setHours(endHour, 0, 0, 0);
-  return { start: s, end: e };
-}
 
-function hoursIn(block: Interval) {
-  return (block.end.getTime() - block.start.getTime()) / 36e5;
-}
+  // Work on a copy
+  const out = workorders.map((w) => ({ ...w }));
 
-function fmtDate(d: Date) {
-  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
+  // First, try to "nudge" scheduled items that overlap ops to a clear slot
+  for (const w of out) {
+    if (w.status !== 'Scheduled' || !w.start || !w.end) continue;
+    const s = new Date(w.start);
+    const e = new Date(w.end);
+    if (!isFinite(s.getTime()) || !isFinite(e.getTime())) continue;
 
-function skillSet(skills?: Skill[]) {
-  const s = new Set<Skill>();
-  (skills && skills.length ? skills : (['Mechanic'] as Skill[])).forEach(k => s.add(k));
-  return s;
-}
-
-function sortWorkOrders(wos: WorkOrder[]): WorkOrder[] {
-  return [...wos].sort((a, b) => {
-    // Unscheduled first
-    const aUns = !a.start || a.status === 'Open';
-    const bUns = !b.start || b.status === 'Open';
-    if (aUns !== bUns) return aUns ? -1 : 1;
-
-    // Type (Corrective before Preventive)
-    const t = BY_TYPE.indexOf(a.type) - BY_TYPE.indexOf(b.type);
-    if (t !== 0) return t;
-
-    // Priority
-    const p = BY_PRIORITY.indexOf(a.priority) - BY_PRIORITY.indexOf(b.priority);
-    if (p !== 0) return p;
-
-    // Earlier created first (if available)
-    const ad = a.created ? new Date(a.created).getTime() : 0;
-    const bd = b.created ? new Date(b.created).getTime() : 0;
-    return ad - bd;
-  });
-}
-
-function getPolicyWindows(policy?: SchedulerPolicy): Array<{ startHour: number; endHour: number }> {
-  if (policy?.windows && policy.windows.length) return policy.windows;
-  // Default windows: if avoiding ops, use night hours; else business hours
-  if (policy?.avoidOps) return [{ startHour: 19, endHour: 23 }];
-  return [{ startHour: 8, endHour: 17 }];
-}
-
-function horizonDays(policy?: SchedulerPolicy) {
-  return clamp(Number(policy?.horizonDays ?? 7), 1, 14);
-}
-
-function buildDailyCapacity(): Map<string, Map<Skill, number>> {
-  // Build map: YYYY-MM-DD -> skill -> hours
-  const { technicians, availability } = getResourceSnapshot();
-  const techSkills = new Map<string, Skill[]>();
-  for (const t of technicians) techSkills.set(t.id, (t.skills?.length ? t.skills : ['Mechanic']) as Skill[]);
-
-  const cap = new Map<string, Map<Skill, number>>();
-  for (const a of availability) {
-    const ymd = a.date.slice(0, 10);
-    const map = cap.get(ymd) ?? new Map<Skill, number>();
-    const skills = techSkills.get(a.technicianId) ?? (['Mechanic'] as Skill[]);
-    for (const s of skills) {
-      map.set(s, (map.get(s) ?? 0) + Number(a.hours ?? 0));
+    const dayKey = ymdLocal(new Date(s));
+    const vehOps = opsBusy.get(w.vehicleId)?.get(dayKey) ?? [];
+    if (vehOps.some((iv) => overlaps(s, e, iv.s, iv.e))) {
+      const placed = placeOnDayNoOverlap(new Date(dayKey + 'T00:00:00'), vehOps, durationHoursFor(w));
+      if (placed) {
+        w.start = placed.s.toISOString();
+        w.end = placed.e.toISOString();
+        movedIds.push(w.id);
+      }
     }
-    cap.set(ymd, map);
   }
-  return cap;
-}
 
-export function proposeSchedule(
-  workorders: WorkOrder[],
-  opsTasks: OpsTask[],
-  policy?: SchedulerPolicy
-): PlanResult {
-  const now = demoNow();
-  const H = horizonDays(policy);
-  const windows = getPolicyWindows(policy);
-  const avoidOps = !!policy?.avoidOps;
+  // Then schedule unscheduled / open items
+  for (const w of out) {
+    const isSched = w.status === 'Scheduled' && w.start && w.end;
+    if (isSched) continue;
+    if (w.status === 'Closed') continue;
 
-  // Capacity by day+skill
-  const dailyCapacity = buildDailyCapacity();
+    const reqSkills = requiredSkillsFor(w);
+    const needHrs = durationHoursFor(w);
 
-  // Vehicle busy windows from ops
-  const opsByVehicle = parseOpsIntervals(opsTasks);
+    let placedWO: { s: Date; e: Date } | null = null;
+    let placedDayKey: string | null = null;
 
-  const original = new Map<string, WorkOrder>(workorders.map(w => [w.id, w]));
-  const result: WorkOrder[] = workorders.map(w => ({ ...w })); // clone
+    // Try each day of the demo week
+    for (const d of weekDays) {
+      const dayKey = ymdLocal(d);
+      const capMap = cap.get(dayKey);
+      if (!capMap) continue;
 
-  const scheduledIds: string[] = [];
-  const movedIds: string[] = [];
-  const unscheduledIds: string[] = [];
-  const rationale: string[] = [];
+      // Check capacity for all required skills
+      const ok =
+        reqSkills.every((sk) => (capMap.get(sk) ?? 0) >= needHrs) ||
+        false;
+      if (!ok) continue;
 
-  const candidates = sortWorkOrders(result).filter(w => w.status !== 'Closed');
+      // Try to place avoiding ops overlap
+      const vehOps = opsBusy.get(w.vehicleId)?.get(dayKey) ?? [];
+      const slot = placeOnDayNoOverlap(d, vehOps, needHrs);
+      if (!slot) continue;
 
-  for (const w of candidates) {
-    const required = skillSet(w.requiredSkills);
-    const duration = Math.max(1, Math.round((w.hours ?? 2)));
-    const vehicleOps = opsByVehicle.get(w.vehicleId) ?? [];
-
-    let placed = false;
-
-    // Try each day within horizon
-    for (let d = 0; d < H && !placed; d++) {
-      const day = new Date(now);
-      day.setHours(0, 0, 0, 0);
-      day.setDate(day.getDate() + d);
-      const ymd = day.toISOString().slice(0, 10);
-
-      // Check skill capacity for the day
-      const cap = dailyCapacity.get(ymd) ?? new Map<Skill, number>();
-      let skillOk = true;
-      for (const s of required) {
-        if ((cap.get(s) ?? 0) < duration) { skillOk = false; break; }
-      }
-      if (!skillOk) continue;
-
-      // Try policy windows on this day
-      for (const win of windows) {
-        const block = dayWindow(day, win.startHour, win.endHour);
-        if (hoursIn(block) < duration) continue;
-
-        // If avoiding ops, ensure the block doesn’t overlap ops windows for this vehicle.
-        // To keep it simple, we schedule the WO at window start for `duration` hours.
-        const candidate: Interval = { start: block.start, end: addHours(block.start, duration) };
-
-        if (avoidOps) {
-          if (hasOverlap(candidate, vehicleOps)) continue;
-        }
-
-        // Place it
-        w.start = iso(candidate.start);
-        w.end = iso(candidate.end);
-        w.status = 'Scheduled';
-
-        // Decrement capacity
-        for (const s of required) {
-          cap.set(s, (cap.get(s) ?? 0) - duration);
-        }
-        dailyCapacity.set(ymd, cap);
-
-        placed = true;
-        break;
-      }
+      placedWO = slot;
+      placedDayKey = dayKey;
+      break;
     }
 
-    const orig = original.get(w.id)!;
-    if (placed) {
+    if (placedWO && placedDayKey) {
+      w.status = 'Scheduled';
+      w.start = placedWO.s.toISOString();
+      w.end = placedWO.e.toISOString();
       scheduledIds.push(w.id);
-      if (orig.start && (orig.start !== w.start || orig.end !== w.end)) movedIds.push(w.id);
+
+      // consume capacity
+      const capMap = cap.get(placedDayKey)!;
+      for (const sk of reqSkills) {
+        capMap.set(sk, (capMap.get(sk) ?? 0) - needHrs);
+      }
     } else {
       unscheduledIds.push(w.id);
-      // revert any partial changes for safety
-      w.start = orig.start;
-      w.end = orig.end;
-      w.status = orig.status;
     }
   }
 
-  // Build rationale bullets
-  const sched = scheduledIds.length;
-  const uns = unscheduledIds.length;
-  const mov = movedIds.length;
+  // Rationale summary
   rationale.push(
-    `Policy windows: ${windows.map(w => `${w.startHour}-${w.endHour}`).join(', ')}${avoidOps ? ' (avoid ops)' : ''}`,
-    `Capacity source: technician availability by skill (daily hours).`,
-    `Result: ${sched} scheduled, ${mov} moved, ${uns} could not be placed.`
+    `Capacity window: ${ymdLocal(weekDays[0])} → ${ymdLocal(weekDays.at(-1)!)}`
   );
-  if (uns > 0) {
-    rationale.push(`Unscheduled examples: ${unscheduledIds.slice(0, 5).join(', ')}${uns > 5 ? '…' : ''}`);
-  }
+  rationale.push(
+    `Policy: ${preferAfterOps ? 'prefer-after-ops' : 'balanced'}`
+  );
+  if (scheduledIds.length)
+    rationale.push(`Scheduled ${scheduledIds.length} open tasks into free windows.`);
+  if (movedIds.length)
+    rationale.push(`Moved ${movedIds.length} scheduled tasks that clashed with ops.`);
+  if (unscheduledIds.length)
+    rationale.push(`Could not place ${unscheduledIds.length} due to capacity/conflicts.`);
 
   return {
-    workorders: result,
-    moved: mov,
-    scheduled: sched,
-    unscheduled: uns,
-    movedIds: movedIds,
-    scheduledIds: scheduledIds,
-    unscheduledIds: unscheduledIds,
-    rationale
+    workorders: out as WorkOrder[],
+    moved: movedIds.length,
+    scheduled: scheduledIds.length,
+    unscheduled: unscheduledIds.length,
+    movedIds,
+    scheduledIds,
+    unscheduledIds,
+    rationale,
   };
 }

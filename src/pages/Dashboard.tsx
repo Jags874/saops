@@ -39,7 +39,7 @@ export default function Dashboard() {
   useEffect(() => { reseedGenericTechnicians(); }, []);
 
   // Base data
-  const vehicles = useMemo(() => getVehicles(20), []);
+  const vehicles = useMemo(() => getVehicles(), []);
   const [workorders, setWorkorders] = useState(() => getWorkOrders());
   const opsTasks = useMemo(() => getOpsTasks(7), []);
 
@@ -316,16 +316,18 @@ export default function Dashboard() {
                                      'Parts Interpreter';
 
   // Apply MUTATE instructions coming from the Scheduler Agent
+// inside Dashboard.tsx
   const handleDecisionSideEffects = (d: AgentDecision) => {
-    if (d.intent === 'MUTATE' && d.mutations?.length) {
-      const notes = applyMutations(d.mutations);
-      // After resource/parts changes, re-run a quick proposal to reflect capacity/parts
-      // (User can still say "accept" to apply)
+    if (d.intent === 'MUTATE' && Array.isArray(d.mutations) && d.mutations.length) {
+      // Cast to the resource mutation shape; unknown items are ignored inside applyMutations
+      const notes = applyMutations(d.mutations as any[]);
+      // Re-run a quick proposal so the UI reflects new capacity/parts
       agentSuggest(undefined);
       return (d.answer ? d.answer + '\n' : '') + `Applied changes:\n- ${notes.join('\n- ')}`;
     }
     return d.answer ?? undefined;
   };
+
 
   return (
     <div className="p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:[grid-template-columns:1fr_18rem] gap-6">

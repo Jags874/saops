@@ -1,6 +1,9 @@
 // src/components/DemoFooter.tsx
 import React from 'react';
-import { demoNow, ymd } from '../utils/demoClock';
+import { getDemoWeekStart } from '../data/adapter';
+// Local helpers to mirror old API
+const demoNow = () => new Date(getDemoWeekStart());
+const ymd = (d: Date) => d.toISOString().slice(0, 10);
 
 export default function DemoFooter() {
   const date = ymd(demoNow());
