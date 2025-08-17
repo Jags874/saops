@@ -1,259 +1,227 @@
 // src/agents/reliability.ts
-import type { QATurn, AgentDecision } from '../types';
-import { getVehicles, getWorkOrders, getPMTasks, getFailures } from '../data/adapter';
+import type { AgentDecision, QATurn } from '../types';
+import { getFailures, getVehicles, getDemoWeekStart } from '../data/adapter';
 
-// … keep the rest exactly as in my last message …
-
-export type ReliabilityPack = {
-  about: { role: string; guidance: string[]; schemaNotes: string[] };
-  window: { generatedAt: string; weeksIncluded: number; lookbackDays: number };
-  datasets: {
-    vehicles: Array<{ id: string; model?: string; year?: number; criticality?: string | number }>;
-    workorders: Array<{ id: string; vehicleId: string; type: string; subsystem?: string; status: string; created?: string }>;
-    pm: Array<{ id: string; title: string; subsystem?: string; interval?: string }>;
-    failures: Array<{ vehicleId: string; subsystem: string; failure_mode?: string; date: string }>;
-    weeklyFailureSeries: Array<{ vehicleId: string; weekStart: string; count: number }>;
-    repeatedFailures: Array<{ vehicleId: string; subsystem?: string; failure_mode?: string; count: number }>;
-    relatedBySubsystem: Array<{ subsystem: string; vehicles: string[]; count: number }>;
-    emergingFailures: Array<{ failure_mode?: string; first_seen: string; vehicles: string[] }>;
-    trendSignals: Array<{ vehicleId: string; last3: number; prev3: number; pctChange: number }>;
-    mtbfByVehicle: Array<{ vehicleId: string; failures: number; spanDays: number; mtbfDays: number }>;
-    pmCoverageGaps: Array<{ subsystem: string; hasPM: boolean; notes: string }>;
-  };
-};
-
-function startOfWeek(d: Date) {
-  const x = new Date(d); const day = x.getDay(); // 0=Sun
-  const diff = (day + 6) % 7; // Monday start
-  x.setDate(x.getDate() - diff); x.setHours(0,0,0,0);
-  return x;
-}
-const ymd = (d: Date) => d.toISOString().slice(0,10);
-const clamp = (n: number, a: number, b: number) => Math.max(a, Math.min(b, n));
-
-export function buildReliabilityPack(weeks = 26, lookbackDays = 180): ReliabilityPack {
-  const generatedAt = new Date().toISOString();
-
-  const vehicles = getVehicles(20).map(v => ({
-    id: v.id, model: (v as any).model, year: (v as any).year, criticality: (v as any).criticality
-  }));
-
-  const wos = getWorkOrders().map(w => ({
-    id: w.id, vehicleId: w.vehicleId, type: w.type, subsystem: (w as any).subsystem, status: w.status, created: (w as any).created
-  }));
-
-  const pm = getPMTasks().map((p: any, i: number) => ({
-    id: p.id ?? `PM-${String(i + 1).padStart(3, '0')}`,
-    title: p.title ?? p.description ?? 'PM Task',
-    subsystem: p.subsystem,
-    interval: p.interval ?? p.frequency
-  }));
-
-  // Failures: extend history window (± lookback)
-  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - lookbackDays);
-  const failuresRaw = getFailures()
-    .map((f: any) => ({
-      vehicleId: String(f.vehicleId ?? f.asset_id ?? ''),
-      subsystem: String(f.subsystem ?? 'unknown'),
-      failure_mode: f.failure_mode ? String(f.failure_mode) : undefined,
-      date: String(f.failure_date ?? f.date ?? new Date().toISOString())
-    }))
-    .filter((f: any) => new Date(f.date) >= cutoff);
-
-  // Weekly series (last `weeks`)
-  const now = new Date(); const endWeek = startOfWeek(now);
-  const start = new Date(endWeek); start.setDate(start.getDate() - (weeks - 1) * 7);
-  const byVWeek = new Map<string, number>();
-  for (const f of failuresRaw) {
-    const dt = new Date(f.date);
-    if (dt < start) continue;
-    const wk = ymd(startOfWeek(dt));
-    const key = `${f.vehicleId}|${wk}`;
-    byVWeek.set(key, (byVWeek.get(key) || 0) + 1);
-  }
-  const weeklyFailureSeries: ReliabilityPack['datasets']['weeklyFailureSeries'] = [];
-  for (const [key, count] of byVWeek.entries()) {
-    const [vehicleId, weekStart] = key.split('|');
-    weeklyFailureSeries.push({ vehicleId, weekStart, count });
-  }
-
-  // Repeated failures per vehicle/mode (count >= 2)
-  const repKey = (r: typeof failuresRaw[number]) => `${r.vehicleId}|${r.subsystem}|${r.failure_mode ?? 'UNK'}`;
-  const repCount = new Map<string, number>();
-  for (const r of failuresRaw) repCount.set(repKey(r), (repCount.get(repKey(r)) || 0) + 1);
-  const repeatedFailures = Array.from(repCount.entries())
-    .filter(([, c]) => c >= 2)
-    .map(([k, c]) => {
-      const [vehicleId, subsystem, failure_mode] = k.split('|');
-      return { vehicleId, subsystem, failure_mode: failure_mode === 'UNK' ? undefined : failure_mode, count: c };
-    });
-
-  // Related failures across vehicles by subsystem (co-occurrence)
-  const bySub = new Map<string, Set<string>>();
-  for (const r of failuresRaw) {
-    const set = bySub.get(r.subsystem) ?? new Set<string>();
-    set.add(r.vehicleId);
-    bySub.set(r.subsystem, set);
-  }
-  const relatedBySubsystem = Array.from(bySub.entries())
-    .map(([subsystem, set]) => ({ subsystem, vehicles: Array.from(set), count: set.size }))
-    .filter(x => x.count >= 3) // only interesting if seen on 3+ vehicles
-    .sort((a,b) => b.count - a.count);
-
-  // Emerging failures (first seen in last 30 days)
-  const cutoff30 = new Date(); cutoff30.setDate(cutoff30.getDate() - 30);
-  const firstSeen = new Map<string, { first: Date; vehicles: Set<string> }>();
-  for (const r of failuresRaw) {
-    const mode = r.failure_mode ?? `subsys:${r.subsystem}`;
-    const cur = firstSeen.get(mode) ?? { first: new Date('2100-01-01'), vehicles: new Set<string>() };
-    const d = new Date(r.date);
-    if (d < cur.first) cur.first = d;
-    cur.vehicles.add(r.vehicleId);
-    firstSeen.set(mode, cur);
-  }
-  const emergingFailures = Array.from(firstSeen.entries())
-    .filter(([, v]) => v.first >= cutoff30)
-    .map(([mode, v]) => ({ failure_mode: mode.startsWith('subsys:') ? undefined : mode, first_seen: ymd(v.first), vehicles: Array.from(v.vehicles) }));
-
-  // Trend signals: last 3 vs prev 3 weeks per vehicle
-  const weeksList: string[] = [];
-  for (let i = 0; i < weeks; i++) {
-    const d = new Date(start); d.setDate(start.getDate() + i * 7);
-    weeksList.push(ymd(d));
-  }
-  const seriesByV = new Map<string, number[]>();
-  for (const v of vehicles) seriesByV.set(v.id, Array(weeks).fill(0));
-  for (const row of weeklyFailureSeries) {
-    const idx = weeksList.indexOf(row.weekStart);
-    if (idx >= 0) seriesByV.get(row.vehicleId)![idx] = row.count;
-  }
-  const trendSignals: ReliabilityPack['datasets']['trendSignals'] = [];
-  for (const [vehicleId, arr] of seriesByV.entries()) {
-    if (weeks < 6) continue;
-    const last3 = arr.slice(-3).reduce((a,b)=>a+b,0);
-    const prev3 = arr.slice(-6,-3).reduce((a,b)=>a+b,0);
-    const pct = prev3 === 0 ? (last3 > 0 ? 100 : 0) : ((last3 - prev3) / Math.max(1, prev3)) * 100;
-    trendSignals.push({ vehicleId, last3, prev3, pctChange: Math.round(pct * 10) / 10 });
-  }
-
-  // MTBF (rough) in days over lookback
-  const spanDays = clamp(lookbackDays, 1, 365);
-  const byVid = new Map<string, number>();
-  for (const f of failuresRaw) byVid.set(f.vehicleId, (byVid.get(f.vehicleId) || 0) + 1);
-  const mtbfByVehicle = vehicles.map(v => {
-    const failures = byVid.get(v.id) || 0;
-    const mtbfDays = failures ? Math.round((spanDays / failures) * 10) / 10 : spanDays;
-    return { vehicleId: v.id, failures, spanDays, mtbfDays };
-  });
-
-  // PM coverage gaps (subsystems with failures but no PM)
-  const pmSubs = new Set(pm.filter(p => p.subsystem).map(p => String(p.subsystem)));
-  const failSubs = new Set(failuresRaw.map(f => f.subsystem));
-  const pmCoverageGaps = Array.from(failSubs).map(sub => ({
-    subsystem: sub,
-    hasPM: pmSubs.has(sub),
-    notes: pmSubs.has(sub) ? 'PM present' : 'No PM task covering this subsystem'
-  }));
-
-  return {
-    about: {
-      role: 'You are the Reliability Agent: detect trends, repeated/related failures, and recommend PM design changes using RCM principles.',
-      guidance: [
-        'Thresholds: flag vehicles with last3 >= 2 and pctChange >= 50%.',
-        'Repeated failures: count >= 2 on same vehicle & subsystem/mode.',
-        'Related failures: same subsystem on 3+ vehicles → common cause or design/usage issue.',
-        'Emerging modes: first seen in last 30 days.',
-        'RCM mapping: propose on-condition tasks, redesigns, interval changes.',
-        'Quantify impact: reference IDs, counts, % change, and PM coverage gaps.',
-      ],
-      schemaNotes: [
-        'weeklyFailureSeries {vehicleId, weekStart, count}',
-        'trendSignals {vehicleId, last3, prev3, pctChange}',
-        'emergingFailures: first_seen in last 30 days',
-        'pmCoverageGaps: subsystems lacking PM',
-      ],
-    },
-    window: { generatedAt, weeksIncluded: weeks, lookbackDays },
-    datasets: {
-      vehicles,
-      workorders: wos,
-      pm,
-      failures: failuresRaw,
-      weeklyFailureSeries,
-      repeatedFailures,
-      relatedBySubsystem,
-      emergingFailures,
-      trendSignals,
-      mtbfByVehicle,
-      pmCoverageGaps,
-    }
-  };
+// --- helpers: parse date fields flexibly as local wall-clock ---
+function parseWhen(x: any): Date | null {
+  const s = String(x ?? '');
+  if (!s) return null;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!m) return null;
+  const [, y, mo, d, hh = '00', mm = '00', ss = '00'] = m;
+  const dt = new Date(Number(y), Number(mo) - 1, Number(d), Number(hh), Number(mm), Number(ss), 0);
+  return Number.isNaN(dt.getTime()) ? null : dt;
 }
 
-export async function analyzeReliabilityWithLLM(
-  question: string,
-  pack: ReliabilityPack,
-  history: QATurn[] = []
-): Promise<AgentDecision> {
-  const key = import.meta.env.VITE_OPENAI_API_KEY;
-  if (!key) return { intent: 'QA', answer: 'VITE_OPENAI_API_KEY missing. Add it in .env.local and restart.' };
-
-  const SYSTEM = [
-    'You are the Reliability Agent for a heavy-vehicle fleet.',
-    'Use Reliability-Centered Maintenance (RCM) principles and classical reliability analysis.',
-    'Given the reliability pack, do ALL of the following as relevant:',
-    ' • Identify vehicles with increasing failure rate (use trendSignals thresholds: last3 >= 2 AND pctChange >= 50%).',
-    ' • List repeated/related failures: same vehicle & subsystem/mode with count >= 2; and cross-vehicle “relatedBySubsystem” clusters.',
-    ' • Flag emerging failure modes (emergingFailures).',
-    ' • Note PM coverage gaps for failing subsystems (pmCoverageGaps.hasPM=false).',
-    ' • Recommend actionable next steps: RCFA candidates, PM changes (on-condition, interval adjust), parts stocking, or redesign.',
-    'Be specific: include IDs (V###, WO-###), subsystem names, counts, % change, and why it matters.',
-    'Prefer 3–7 bullets grouped by theme with short titles.',
-  ].join('\n');
-
-  const RESPONSE = [
-    'Return ONLY this JSON (no extra text):',
-    '```json',
-    '{ "intent": "QA",',
-    '  "answer": "• Increasing rate: V007 (last3=3, prev3=0, +100%); V003 (...)\n• Repeated failures: V007/brakes (3x) → RCFA; ...\n• Emerging: EGR valve seen on V012/V015 in last 30d → add on-condition check\n• PM gap: Cooling lacks PM despite 4 failures → add leak/pressure check\n• Next actions: ..."}',
-    '```'
-  ].join('\n');
-
-  const messages = [
-    { role: 'system', content: SYSTEM },
-    { role: 'system', content: RESPONSE },
-    { role: 'user', content: `RELIABILITY_PACK:\n\`\`\`json\n${JSON.stringify(pack)}\n\`\`\`` },
-    { role: 'user', content: `HISTORY:\n\`\`\`json\n${JSON.stringify(history.slice(-6))}\n\`\`\`` },
-    { role: 'user', content: `QUESTION:\n${question}` },
-  ] as const;
-
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-4o-mini', messages, temperature: 0.2 })
-  });
-  const data = await resp.json();
-  if (!resp.ok || data?.error) {
-    return { intent: 'QA', answer: `Model error: ${data?.error?.message ?? resp.statusText}` };
-  }
-
-  const text = String(data?.choices?.[0]?.message?.content ?? '').trim();
-  const fence = text.match(/```json\s*([\s\S]*?)```/i);
-  const raw = fence ? fence[1] : text;
-  let obj: any; try { obj = JSON.parse(raw); } catch { obj = {}; }
-
-  const answer = typeof obj?.answer === 'string' && obj.answer.trim() ? obj.answer.trim() : 'I could not derive a reliability answer.';
-  return { intent: 'QA', answer };
+// narrow fields safely across the two failure shapes we’ve used
+function fVehicleId(f: any): string {
+  return String(f.vehicleId ?? f.asset_id ?? f.assetId ?? '');
+}
+function fDate(f: any): Date | null {
+  return parseWhen(f.date ?? f.failureDate ?? f.failure_date);
+}
+function fSubsystem(f: any): string {
+  return String(f.subsystem ?? '').toLowerCase();
+}
+function fPart(f: any): string {
+  return String(f.part ?? f.part_id ?? f.partID ?? '').toLowerCase();
+}
+function fMode(f: any): string {
+  return String(f.failure_mode ?? f.mode ?? '').toLowerCase();
 }
 
-const TIPS = [
-  'Increasing rate: check last 3 vs prior 3 weeks and quantify % change.',
-  'Related failures across vehicles suggest design/usage causes — start with most common subsystem.',
-  'PM gap: failing subsystem with no PM → add on-condition checks.',
-  'RCM: prefer detectability (on-condition) over time-based tasks for random failures.',
-  'Parts lead time + high criticality → stock spares.',
+// Random fact for the “Hello Reliability Agent” button
+const FACTS = [
+  'Trend rule: repeated same-subsystem failures in short intervals suggest design or maintenance issues.',
+  'Quick check: compare last 60 days vs previous 60 days to spot batch or seasonal effects.',
+  'RCM tip: before adding a PM, prove the failure is predictable and worth the intervention.',
+  'Beware maintenance-induced failures after major overhauls—watch failure modes right after service.',
 ];
 export function helloReliabilityFact(): string {
-  const t = TIPS[Math.floor(Math.random() * TIPS.length)];
-  return `Hello 👋 — I’m the Reliability Agent. Tip: ${t}`;
+  return FACTS[Math.floor(Math.random() * FACTS.length)];
+}
+
+/**
+ * Build a compact pack the model (or heuristics) can use:
+ * - vehicles
+ * - recent failures (<= daysBack from the demo anchor)
+ * - simple trend summaries per vehicle and fleet thermostat spike check
+ */
+export function buildReliabilityPack(weeksBack = 26, daysBack = 180) {
+  const anchorISO = getDemoWeekStart(); // '2025-08-22T00:00:00Z'
+  const anchor = new Date(anchorISO);
+  // define windows relative to anchor (local)
+  const recentStart = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - daysBack, 0, 0, 0, 0);
+  const last60Start  = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 60, 0, 0, 0, 0);
+  const prev60Start  = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 120, 0, 0, 0, 0);
+
+  const vehicles = getVehicles();
+  const failuresAll = (getFailures?.() ?? []).filter((f: any) => {
+    const dt = fDate(f);
+    return dt && dt >= recentStart && dt <= anchor;
+  });
+
+  // per-vehicle counts and 3-week window change
+  const byVehicle = new Map<string, { total: number; bySubsystem: Record<string, number> }>();
+  const last21ByV = new Map<string, number>();
+  const prev21ByV = new Map<string, number>();
+  const last21Start = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 21, 0, 0, 0, 0);
+  const prev21Start = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - 42, 0, 0, 0, 0);
+
+  // fleet thermostat spike
+  let fleetThermoLast60 = 0, fleetThermoPrev60 = 0;
+
+  // repeated/related per vehicle (same subsystem or part)
+  const repeats: Record<string, { subsystem?: string; part?: string; count: number }[]> = {};
+
+  // temp grouping for repeats
+  const groupByVSub = new Map<string, number>();
+  const groupByVPart = new Map<string, number>();
+
+  for (const f of failuresAll) {
+    const vid = fVehicleId(f);
+    if (!vid) continue;
+    const dt = fDate(f)!;
+    const sub = fSubsystem(f);
+    const part = fPart(f);
+    const mode = fMode(f);
+
+    // per-vehicle rollup
+    const rec = byVehicle.get(vid) ?? { total: 0, bySubsystem: {} };
+    rec.total += 1;
+    if (sub) rec.bySubsystem[sub] = (rec.bySubsystem[sub] ?? 0) + 1;
+    byVehicle.set(vid, rec);
+
+    // 3-week windows
+    if (dt >= last21Start) last21ByV.set(vid, (last21ByV.get(vid) ?? 0) + 1);
+    else if (dt >= prev21Start && dt < last21Start) prev21ByV.set(vid, (prev21ByV.get(vid) ?? 0) + 1);
+
+    // thermostat fleet spike (cooling + thermostat in part/mode)
+    const looksThermo = sub.includes('cool') && (part.includes('thermo') || mode.includes('thermo'));
+    if (looksThermo) {
+      if (dt >= last60Start) fleetThermoLast60 += 1;
+      else if (dt >= prev60Start && dt < last60Start) fleetThermoPrev60 += 1;
+    }
+
+    // for repeats
+    if (sub) {
+      const k = `${vid}|sub|${sub}`;
+      groupByVSub.set(k, (groupByVSub.get(k) ?? 0) + 1);
+    }
+    if (part) {
+      const k = `${vid}|part|${part}`;
+      groupByVPart.set(k, (groupByVPart.get(k) ?? 0) + 1);
+    }
+  }
+
+  // materialize repeats where count >= 2
+  for (const [k, n] of groupByVSub.entries()) {
+    if (n < 2) continue;
+    const [vid, , sub] = k.split('|');
+    repeats[vid] = repeats[vid] ?? [];
+    repeats[vid].push({ subsystem: sub, count: n });
+  }
+  for (const [k, n] of groupByVPart.entries()) {
+    if (n < 2) continue;
+    const [vid, , part] = k.split('|');
+    repeats[vid] = repeats[vid] ?? [];
+    repeats[vid].push({ part, count: n });
+  }
+
+  // increasing list
+  const increasing: { vehicleId: string; last3w: number; prev3w: number; pctChange: number }[] = [];
+  const allVehicleIds = new Set<string>([...byVehicle.keys(), ...last21ByV.keys(), ...prev21ByV.keys()]);
+  for (const vid of allVehicleIds) {
+    const a = last21ByV.get(vid) ?? 0;
+    const b = prev21ByV.get(vid) ?? 0;
+    if (a >= 2 && (b === 0 || a > b)) {
+      const pct = b === 0 ? 100 : Math.round(((a - b) / Math.max(1, b)) * 100);
+      increasing.push({ vehicleId: vid, last3w: a, prev3w: b, pctChange: pct });
+    }
+  }
+  increasing.sort((x, y) => y.pctChange - x.pctChange || y.last3w - x.last3w);
+
+  const thermoSpike = {
+    last60: fleetThermoLast60,
+    prev60: fleetThermoPrev60,
+    uptick: fleetThermoLast60 > fleetThermoPrev60
+  };
+
+  return {
+    anchor: anchorISO,
+    horizonDays: daysBack,
+    vehicles: vehicles.map(v => ({ id: v.id, status: v.status })),
+    failuresRecent: failuresAll.length,
+    byVehicle: Array.from(byVehicle.entries()).map(([vehicleId, v]) => ({ vehicleId, total: v.total, bySubsystem: v.bySubsystem })),
+    increasing,
+    repeats,
+    thermostatFleet: thermoSpike
+  };
+}
+
+/**
+ * Simple, deterministic analyzer (no UI changes, agents-only).
+ * It uses the pack to answer the common questions you demo.
+ */
+export async function analyzeReliabilityWithLLM(
+  userText: string,
+  pack: any,
+  _history: QATurn[] = []
+): Promise<AgentDecision> {
+  const q = userText.toLowerCase();
+
+  // Increasing rates
+  if (/(increasing|high rate|spike|rising)/i.test(userText)) {
+    const top = (pack.increasing as any[] ?? []).slice(0, 5);
+    if (!top.length) {
+      return { intent: 'QA', answer: 'I don’t see a clear increase by vehicle in the last 3 weeks vs prior 3 weeks.' };
+    }
+    const lines = top.map(v => `- ${v.vehicleId}: ${v.last3w} vs ${v.prev3w} (Δ ${v.pctChange}%)`);
+    const thermo = pack.thermostatFleet?.uptick
+      ? `\nFleet-wide thermostat uptick last 60d (${pack.thermostatFleet.last60}) vs prior 60d (${pack.thermostatFleet.prev60}).`
+      : '';
+    return {
+      intent: 'QA',
+      answer: `Vehicles with increasing failure rates (last 3w vs prior 3w):\n${lines.join('\n')}${thermo}`
+    };
+  }
+
+  // Repeated / related failures
+  if (/(repeated|repeat|related)/i.test(q)) {
+    const r = pack.repeats ?? {};
+    const keys = Object.keys(r);
+    if (!keys.length) return { intent: 'QA', answer: 'No repeated or related failures stood out in the recent window.' };
+    const parts = keys.slice(0, 6).map(k => {
+      const items = (r[k] as any[]).map(x => x.subsystem ? `${x.subsystem}×${x.count}` : `${x.part}×${x.count}`);
+      return `- ${k}: ${items.join(', ')}`;
+    });
+    return { intent: 'QA', answer: `Repeated / related failures by vehicle:\n${parts.join('\n')}` };
+  }
+
+  // Root cause around thermostat
+  if (/(root cause|why|cause).*thermostat|thermostat.*(root cause|why|cause)/i.test(q) || /thermostat uptick|thermostat spike/i.test(q)) {
+    const t = pack.thermostatFleet;
+    const note = t?.uptick
+      ? `We see a thermostat uptick (last 60d ${t.last60} vs prior 60d ${t.prev60}).`
+      : `Thermostat signals are present but not clearly above baseline.`;
+    return {
+      intent: 'QA',
+      answer:
+`${note}
+Likely hypothesis: faulty supplier batch (marginal opening temp or weak wax charge).
+Quick confirmatory action:
+- Sample 1–2 vehicles of similar build for **Thermostat Inspection** (lot code & opening temp check).
+- Cross-check recent part GRNs for the same supplier/lot.`
+    };
+  }
+
+  // General fallback / guidance
+  return {
+    intent: 'QA',
+    answer:
+`Ask me things like:
+- “Any vehicles with increasing failure rates in the last 6 months?”
+- “Any repeated or related failures we should look into?”
+- “What’s the likely root cause behind the thermostat uptick, and a quick action to confirm?”`
+  };
 }

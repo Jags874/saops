@@ -1,130 +1,209 @@
 // src/agents/agentRuntime.ts
-import type {
-  SchedulerPolicy, ReportQuery, QATurn, AgentDecision, PlanContext
-} from '../types';
-import type { KnowledgePack } from './context';
+import type { AgentDecision, QATurn } from '../types';
 
-const normalize = (s: string) =>
-  s.replace(/\u2018|\u2019|\u201B/g, "'").replace(/\u201C|\u201D/g, '"').replace(/\s+/g, ' ').trim();
+/* =========================================================
+   Scheduler Agent: lightweight NL → MUTATE actions
+   - ADD_WORKORDER (create & schedule)
+   - CANCEL_OPS_TASK (by id or by conflictsWith: WO-…)
+   Anchored to the static demo week starting 22 Aug 2025.
+   ========================================================= */
 
-function safeSlice<T>(arr: T[] | undefined, n = 60): T[] | undefined {
-  if (!arr) return arr;
-  return arr.length > n ? arr.slice(0, n) : arr;
+const DAY_MS = 86_400_000;
+// Static anchor: 2025-08-22 local week. We compute calendar math off UTC
+// then emit local "wall-clock" ISO strings without timezone suffix.
+const DEMO_START_UTC = Date.UTC(2025, 7, 22, 0, 0, 0); // Aug is 7
+
+function pad2(n: number) { return String(n).padStart(2, '0'); }
+function ymdLocal(d: Date) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
-function parseJSONFrom(text: string): any | null {
-  const t = text.trim();
-  const fence = t.match(/```json\s*([\s\S]*?)```/i);
-  const raw = fence ? fence[1] : t;
-  try { return JSON.parse(raw); } catch { return null; }
+function localIso(ymd: string, hh = 8, mm = 0) {
+  return `${ymd}T${pad2(hh)}:${pad2(mm)}:00`; // local, no Z
+}
+function pickDayYMD(dayOffset = 1) {
+  const d = new Date(DEMO_START_UTC + dayOffset * DAY_MS);
+  // Build a local YMD
+  const ymd = ymdLocal(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0));
+  return ymd;
 }
 
-export async function analyzeWithLLM(
-  question: string,
-  pack: KnowledgePack,
-  history: QATurn[] = [],
-  plan: PlanContext = {}
-): Promise<AgentDecision> {
-  const key = import.meta.env.VITE_OPENAI_API_KEY;
-  if (!key) return { intent: 'QA', answer: 'Cloud reasoning key missing. Add VITE_OPENAI_API_KEY in .env.local and restart.' };
+// --- Tiny natural-language helpers (best-effort, robust to phrasing) ---
+function extractVehicleId(text: string): string | null {
+  const m = text.toUpperCase().match(/\bV(\d{3})\b/);
+  return m ? `V${m[1]}` : null;
+}
+function extractHours(text: string): number | null {
+  const m = text.match(/(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)\b/i);
+  return m ? Math.max(0.25, parseFloat(m[1])) : null;
+}
+function extractPriority(text: string): 'Low' | 'Medium' | 'High' | 'Critical' | null {
+  if (/critical/i.test(text)) return 'Critical';
+  if (/high/i.test(text)) return 'High';
+  if (/medium|med\b/i.test(text)) return 'Medium';
+  if (/low/i.test(text)) return 'Low';
+  return null;
+}
+function extractWhen(text: string): { start: string; end: string } {
+  // Defaults: tomorrow 08:00 for 1h
+  let dayOffset = /today/i.test(text) ? 0
+    : /day after tomorrow|in\s*2\s*days/i.test(text) ? 2
+    : /tomorrow/i.test(text) ? 1
+    : 1;
 
-  const shortHistory = history.slice(-6);
-  const planContext: PlanContext = {
-    lastAccepted: plan.lastAccepted ? {
-      ...plan.lastAccepted,
-      movedIds: safeSlice(plan.lastAccepted.movedIds, 120),
-      scheduledIds: safeSlice(plan.lastAccepted.scheduledIds, 120),
-      unscheduledIds: safeSlice(plan.lastAccepted.unscheduledIds, 120),
-    } : undefined,
-    preview: plan.preview ? {
-      ...plan.preview,
-      movedIds: safeSlice(plan.preview.movedIds, 120),
-      scheduledIds: safeSlice(plan.preview.scheduledIds, 120),
-      unscheduledIds: safeSlice(plan.preview.unscheduledIds, 120),
-    } : undefined
-  };
+  const hours = extractHours(text) ?? 1;
 
-  const SYSTEM = [
-    'You are the Scheduler Agent for a fleet maintenance app.',
-    'You receive a Knowledge Pack + short history + plan context.',
-    'INTENTS:',
-    ' • SUGGEST: produce a scheduling policy (JSON).',
-    ' • ACCEPT / REJECT: apply or discard the current preview.',
-    ' • REPORT: return a report query JSON.',
-    ' • QA: natural language concise answer using ONLY provided data.',
-    ' • MUTATE: change resources/parts (add technicians, set availability, mark a part available) via JSON mutations.',
-    'When MUTATE is used, also reply with a short natural-language confirmation in "answer".',
-  ].join('\n');
-
-  const RESPONSE_FORMAT = [
-    'Return ONLY this JSON (no extra text):',
-    '```json',
-    '{',
-    '  "intent": "SUGGEST|ACCEPT|REJECT|REPORT|QA|MUTATE",',
-    '  "policy": { "windows": [{"startHour": 18, "endHour": 23}], "avoidOps": true, "weekendsAllowed": true, "vehicleScope": ["V001"], "depotScope": ["Depot B"], "horizonDays": 7, "prioritize": ["Corrective","Critical","High","Preventive","Medium","Low"], "splitLongJobs": true, "maxChunkHours": 4 },',
-    '  "report": { "kind": "UNSCHEDULED", "vehicleId": "V007", "nBack": 1 },',
-    '  "mutations": [',
-    '    { "op": "ADD_TECH", "name": "Temp Tech", "skill": "Mechanic", "depot": "Depot B", "hoursPerDay": 8 },',
-    '    { "op": "SET_AVAILABILITY", "technicianId": "techA", "date": "2025-08-22", "hours": 6 },',
-    '    { "op": "MARK_PART_AVAILABLE", "partId": "P-221", "qty": 2, "eta": "2025-08-23" }',
-    '  ],',
-    '  "answer": "Short confirmation or explanation.",',
-    '  "confidence": 0.0',
-    '}',
-    '```'
-  ].join('\n');
-
-  const messages = [
-    { role: 'system', content: SYSTEM },
-    { role: 'system', content: RESPONSE_FORMAT },
-    { role: 'user', content: `KNOWLEDGE_PACK:\n\`\`\`json\n${JSON.stringify(pack)}\n\`\`\`` },
-    { role: 'user', content: `PLAN_CONTEXT:\n\`\`\`json\n${JSON.stringify(planContext)}\n\`\`\`` },
-    { role: 'user', content: `HISTORY:\n\`\`\`json\n${JSON.stringify(shortHistory)}\n\`\`\`` },
-    { role: 'user', content: `QUESTION:\n${normalize(question)}` },
-  ] as const;
-
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-4o-mini', messages, temperature: 0.2 })
-  });
-
-  const data = await resp.json();
-  if (!resp.ok || data?.error) {
-    const reason = data?.error?.message ?? resp.statusText;
-    return { intent: 'QA', answer: `Model error: ${reason}` };
+  // Optional crude time extraction (e.g., "at 10", "10:30", "10am")
+  let hh = 8, mm = 0;
+  const t1 = text.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/i);
+  if (t1) {
+    hh = parseInt(t1[1], 10);
+    mm = t1[2] ? parseInt(t1[2]) : 0;
+    const ampm = (t1[3] || '').toLowerCase();
+    if (ampm === 'pm' && hh < 12) hh += 12;
+    if (ampm === 'am' && hh === 12) hh = 0;
   }
 
-  const text = String(data?.choices?.[0]?.message?.content ?? '');
-  const obj = parseJSONFrom(text) ?? {};
-  const rawIntent = String(obj.intent ?? 'QA').toUpperCase();
-  const allowed = new Set(['SUGGEST','ACCEPT','REJECT','REPORT','QA','MUTATE']);
-  const intent = (allowed.has(rawIntent) ? rawIntent : 'QA') as AgentDecision['intent'];
-
-  const decision: AgentDecision = {
-    intent,
-    policy: obj.policy,
-    report: obj.report,
-    answer: obj.answer,
-    mutations: Array.isArray(obj.mutations) ? obj.mutations : undefined,
-    confidence: typeof obj.confidence === 'number' ? obj.confidence : undefined
-  };
-
-  if (decision.intent === 'SUGGEST' && decision.policy?.horizonDays) {
-    decision.policy.horizonDays = Math.max(1, Math.min(14, Number(decision.policy.horizonDays)));
-  }
-
-  return decision;
+  const ymd = pickDayYMD(dayOffset);
+  const start = localIso(ymd, hh, mm);
+  const end = localIso(ymd, hh + Math.floor(hours), (mm + (hours % 1) * 60) % 60);
+  return { start, end };
 }
 
+function titleFromText(text: string): string {
+  // Prefer explicit, else fall back to Thermostat Inspection for this demo
+  if (/thermostat/i.test(text)) return 'Thermostat Inspection';
+  if (/inspection/i.test(text)) return 'Inspection';
+  if (/service/i.test(text)) return 'Service';
+  if (/diagnos/i.test(text)) return 'Diagnostics';
+  return 'Thermostat Inspection';
+}
+function skillsFromText(text: string): string[] {
+  if (/elect/i.test(text)) return ['AutoElec'];
+  if (/mechanic|mech/i.test(text)) return ['Mechanic'];
+  // Default skill for this demo
+  return ['Mechanic'];
+}
+function priorityFromText(text: string): 'Low' | 'Medium' | 'High' | 'Critical' {
+  return extractPriority(text) ?? 'Medium';
+}
+function typeFromText(text: string): 'Preventive' | 'Corrective' {
+  if (/prevent/i.test(text)) return 'Preventive';
+  if (/correct|react/i.test(text)) return 'Corrective';
+  // For inspections we prefer Preventive in this demo flow
+  return /inspection/i.test(text) ? 'Preventive' : 'Corrective';
+}
+function subsystemFromText(text: string): string | undefined {
+  if (/thermostat|cool/i.test(text)) return 'cooling';
+  if (/engine/i.test(text)) return 'engine';
+  if (/transmission|gear/i.test(text)) return 'transmission';
+  if (/elect/i.test(text)) return 'electrical';
+  return undefined;
+}
+
+// Random fun fact for the hello button
 const FACTS = [
-  'Grouping PM by skill reduces changeovers and increases wrench time.',
-  'Night/weekend windows cut conflicts with transport demand.',
-  'Carry spares for long-lead, high-criticality parts to reduce downtime.',
-  'Split long jobs into chunks to fit tight capacity.',
-  'Backlog > 2× weekly capacity predicts future breakdowns.',
-  'Depot-specific scheduling avoids travel time and slippage.',
+  'Tip: pack maintenance into low-demand windows before ops tasks land.',
+  'You can ask me to “cancel the ops task that conflicts with WO-…”.',
+  'Try “Create and schedule a 1-hour Thermostat Inspection for V012 tomorrow 8am.”',
+  'I can add work orders and immediately propose a new plan — just say “schedule an inspection for V007”.',
 ];
 export function helloSchedulerFact(): string {
-  const fact = FACTS[Math.floor(Math.random() * FACTS.length)];
-  return `Hello 👋 — I’m the Scheduler Agent. Tip: ${fact}`;
+  return FACTS[Math.floor(Math.random() * FACTS.length)];
+}
+
+/**
+ * Main entry used by Dashboard for the Scheduler agent.
+ * Returns QA (text only), SUGGEST (policy), or MUTATE (list of mutations).
+ */
+export async function analyzeWithLLM(
+  userText: string,
+  _knowledgePack: any,
+  _history: QATurn[] = [],
+  _planCtx?: any
+): Promise<AgentDecision> {
+  // ---- 1) Create & schedule an inspection work order ----
+  // e.g. "create/schedule/add ... inspection ... for V012 ... [tomorrow 8am] [1h] [mechanic] [medium]"
+  if (/(create|add|schedule).*(inspection|service|diagnos)/i.test(userText)) {
+    const vehicleId = extractVehicleId(userText) ?? 'V012'; // default useful demo id
+    const hours = extractHours(userText) ?? 1;
+    const { start, end } = extractWhen(userText);
+    const title = titleFromText(userText);
+    const reqSkills = skillsFromText(userText);
+    const prio = priorityFromText(userText);
+    const subsystem = subsystemFromText(userText);
+
+    // Generate a readable id — stable per vehicle+title within demo week
+    const base = `${title}`.replace(/\s+/g, '').toUpperCase().slice(0, 12);
+    const id = `WO-${base}-${vehicleId}`;
+
+    // NOTE: we include BOTH 'op' and 'type', and cast as any[] to satisfy differing type defs
+    const mutations = [
+      {
+        op: 'ADD_WORKORDER',
+        type: 'ADD_WORKORDER',
+        workorder: {
+          id,
+          vehicleId,
+          title,
+          type: typeFromText(userText),
+          priority: prio,
+          requiredSkills: reqSkills,
+          hours,
+          start,
+          end,
+          status: 'Scheduled',
+          subsystem
+        }
+      }
+    ] as any[];
+
+    return {
+      intent: 'MUTATE',
+      answer: `Created and scheduled **${id}** on ${vehicleId}: ${title} (${hours}h, ${prio}, ${reqSkills.join('/')}). I’ll propose an updated plan.`,
+      mutations
+    };
+  }
+
+  // ---- 2) Cancel operational task that conflicts with a WO ----
+  // e.g. "cancel the ops task that conflicts with WO-INSPECT-V012"
+  if (/cancel.*(op|ops).*(task)/i.test(userText) && /wo[- ]?[a-z0-9]+/i.test(userText)) {
+    const wo = userText.match(/wo[- ]?[a-z0-9]+/i)?.[0].replace(/\s+/g, '').toUpperCase();
+
+    const mutations = [
+      wo
+        ? { op: 'CANCEL_OPS_TASK', type: 'CANCEL_OPS_TASK', conflictsWith: wo }
+        : { op: 'CANCEL_OPS_TASK', type: 'CANCEL_OPS_TASK' }
+    ] as any[];
+
+    return {
+      intent: 'MUTATE',
+      answer: `I’ll cancel the operational task that conflicts with **${wo ?? 'the specified WO'}** and refresh the schedule.`,
+      mutations
+    };
+  }
+
+  // ---- 3) Direct cancel by ops id ----
+  // e.g. "cancel OP-1234"
+  if (/cancel\b.*\bop[- ]?\d+/i.test(userText)) {
+    const opId = userText.match(/\bop[- ]?\d+/i)?.[0].replace(' ', '').toUpperCase();
+
+    const mutations = [
+      { op: 'CANCEL_OPS_TASK', type: 'CANCEL_OPS_TASK', id: opId }
+    ] as any[];
+
+    return {
+      intent: 'MUTATE',
+      answer: `Cancelling operational task **${opId}** and updating the plan.`,
+      mutations
+    };
+  }
+
+  // ---- 4) Guidance (fallback) ----
+  return {
+    intent: 'QA',
+    answer:
+`I can modify the plan. Try:
+• “Create and schedule a 1-hour Thermostat Inspection for V012 tomorrow 8am (Medium, Mechanic).”
+• “Cancel the operational task that conflicts with WO-THERMOSTATINS-V012.”`
+  };
 }

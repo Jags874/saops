@@ -1,0 +1,26 @@
+Scenario script (use these exact messages in the Agent Console)
+
+You → Reliability Agent
+“Are there any vehicles with high or increasing failure rates in the last 6 months?”
+
+Expected: It calls out (for example) V003 (engine), V007 (transmission), and a fleet-wide thermostat uptick in the last ~2 months.
+
+You → Reliability Agent
+“What’s the likely root cause behind the thermostat uptick, and what’s a quick action to confirm?”
+
+Expected: It hypothesizes a bad thermostat batch from one supplier, suggests a targeted inspection on a similar vehicle (e.g., V012) and to sample the part’s lot code.
+
+You → Scheduler Agent
+“Create and schedule a 1-hour Thermostat Inspection for V012 tomorrow morning with a Mechanic. Make it Medium priority.”
+
+Expected: The agent creates a new work order (e.g., WO-INSPECT-V012) and schedules it in the next 7-day window.
+
+You (notice a clash on the Gantt) → Scheduler Agent
+“Cancel the operational task that conflicts with WO-INSPECT-V012.”
+
+Expected: The agent cancels the conflicting ops task and refreshes the preview so the maintenance stands.
+
+You → Parts Interpreter
+“If the inspection confirms a faulty batch, what thermostat should we order across the fleet and how many?”
+
+Expected: A realistic fictional part suggestion (P/N, supplier, cost, lead time) and a fleet-wide qty recommendation with a short justification.
