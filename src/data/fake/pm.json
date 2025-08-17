@@ -1,0 +1,7 @@
+[
+  { "pmId":"PM-ENG-15K", "assetModel":"*", "subsystem":"engine",       "trigger":{"type":"mileage","intervalKm":15000}, "requiredParts":["ENG-OIL-FLTR","ENG-15W40"], "labourHours":3,   "requiredSkills":["engine","general"], "tools":["Torque Wrench"] },
+  { "pmId":"PM-BRK-INSP","assetModel":"*", "subsystem":"brakes",       "trigger":{"type":"time","intervalDays":90},      "requiredParts":[],                          "labourHours":1.5, "requiredSkills":["brakes"],          "tools":["Brake Gauge"] },
+  { "pmId":"PM-TRN-CLUT","assetModel":"K220","subsystem":"transmission","trigger":{"type":"hours","intervalHours":1000},"requiredParts":["TRN-FLUID"],                 "labourHours":2,   "requiredSkills":["transmission"],    "tools":["Trans Jack"] },
+  { "pmId":"PM-COOL-CHK","assetModel":"*", "subsystem":"cooling",      "trigger":{"type":"time","intervalDays":180},     "requiredParts":["COL-COOLANT"],              "labourHours":1,   "requiredSkills":["cooling"],         "tools":["Pressure Tester"] },
+  { "pmId":"PM-ELC-BATT","assetModel":"*", "subsystem":"electrical",   "trigger":{"type":"time","intervalDays":120},     "requiredParts":[],                          "labourHours":0.8, "requiredSkills":["electrical"],       "tools":["Battery Tester"] }
+]

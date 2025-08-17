@@ -1,0 +1,22 @@
+[
+  { "id": "V001", "make": "Kenworth",  "model": "K200",        "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V002", "make": "Volvo",     "model": "FH16",        "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V003", "make": "Scania",    "model": "R500",        "depot": "Depot A", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V004", "make": "Mack",      "model": "Anthem",      "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V005", "make": "DAF",       "model": "XF",          "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V006", "make": "Mercedes",  "model": "Actros",      "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V007", "make": "Kenworth",  "model": "T610",        "depot": "Depot C", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V008", "make": "Volvo",     "model": "FM",          "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V009", "make": "Scania",    "model": "G410",        "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V010", "make": "Mack",      "model": "Granite",     "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V011", "make": "DAF",       "model": "CF",          "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V012", "make": "Mercedes",  "model": "Arocs",       "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V013", "make": "Kenworth",  "model": "K220",        "depot": "Depot A", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V014", "make": "Volvo",     "model": "FH",          "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V015", "make": "Scania",    "model": "S730",        "depot": "Depot B", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V016", "make": "Mack",      "model": "Super-Liner", "depot": "Depot A", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V017", "make": "DAF",       "model": "XG+",         "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V018", "make": "Mercedes",  "model": "Actros",      "depot": "Depot B", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V019", "make": "Kenworth",  "model": "T909",        "depot": "Depot A", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
+  { "id": "V020", "make": "Volvo",     "model": "FMX",         "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" }
+]

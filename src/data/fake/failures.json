@@ -1,0 +1,42 @@
+[
+  { "vehicleId": "V003", "subsystem": "engine",       "partId": "ENG-FUEL-FLTR", "failureMode": "restricted flow",                 "failureDate": "2025-04-05T09:20:00Z", "downtimeHours": 3 },
+  { "vehicleId": "V003", "subsystem": "engine",       "partId": "ENG-FUEL-FLTR", "failureMode": "restricted flow (repeat)",        "failureDate": "2025-06-30T11:10:00Z", "downtimeHours": 5 },
+  { "vehicleId": "V003", "subsystem": "engine",       "partId": "ENG-FUEL-FLTR", "failureMode": "restricted flow (repeat)",        "failureDate": "2025-08-12T10:15:00Z", "downtimeHours": 6 },
+  { "vehicleId": "V003", "subsystem": "electrical",   "partId": "ELEC-TERM-KIT", "failureMode": "loose ground",                    "failureDate": "2025-06-28T08:10:00Z", "downtimeHours": 2 },
+
+  { "vehicleId": "V007", "subsystem": "transmission", "partId": "TRN-CLUTCH",    "failureMode": "clutch slip",                     "failureDate": "2025-05-10T13:00:00Z", "downtimeHours": 6 },
+  { "vehicleId": "V007", "subsystem": "transmission", "partId": "TRN-CLUTCH",    "failureMode": "clutch slip (recurrence)",        "failureDate": "2025-07-08T09:30:00Z", "downtimeHours": 8 },
+  { "vehicleId": "V007", "subsystem": "transmission", "partId": "TRN-CLUTCH",    "failureMode": "clutch slip (severe)",            "failureDate": "2025-08-18T09:00:00Z", "downtimeHours": 9 },
+
+  { "vehicleId": "V018", "subsystem": "engine",       "partId": "ENG-OIL-FLTR",  "failureMode": "metallic debris in filter",       "failureDate": "2025-05-22T08:40:00Z", "downtimeHours": 4 },
+  { "vehicleId": "V018", "subsystem": "engine",       "partId": "ENG-HD-GASK",   "failureMode": "coolant in oil (suspect HG)",     "failureDate": "2025-07-03T12:20:00Z", "downtimeHours": 12 },
+  { "vehicleId": "V018", "subsystem": "engine",       "partId": "ENG-HD-GASK",   "failureMode": "compression loss (top-end)",      "failureDate": "2025-08-10T07:50:00Z", "downtimeHours": 16 },
+
+  { "vehicleId": "V002", "subsystem": "engine",       "partId": "ENG-FUEL-FLTR", "failureMode": "fuel restriction",                "failureDate": "2025-08-05T10:00:00Z", "downtimeHours": 3 },
+  { "vehicleId": "V002", "subsystem": "electrical",   "partId": "ELEC-TERM-KIT", "failureMode": "battery terminal loose",          "failureDate": "2025-06-11T07:40:00Z", "downtimeHours": 1.5 },
+
+  { "vehicleId": "V008", "subsystem": "electrical",   "partId": "ELEC-TERM-KIT", "failureMode": "CAN bus intermittent",            "failureDate": "2025-07-14T09:25:00Z", "downtimeHours": 4 },
+  { "vehicleId": "V008", "subsystem": "electrical",   "partId": "ELEC-TERM-KIT", "failureMode": "battery drain / phantom load",    "failureDate": "2025-05-09T16:45:00Z", "downtimeHours": 3 },
+
+  { "vehicleId": "V014", "subsystem": "engine",       "partId": "ENG-OIL-FLTR",  "failureMode": "seal leak",                       "failureDate": "2025-08-01T14:45:00Z", "downtimeHours": 3 },
+  { "vehicleId": "V014", "subsystem": "engine",       "partId": "ENG-15W40",     "failureMode": "oil contamination alert",         "failureDate": "2025-05-18T08:50:00Z", "downtimeHours": 2 },
+
+  { "vehicleId": "V020", "subsystem": "engine",       "partId": "ENG-OIL-FLTR",  "failureMode": "bypass stuck",                    "failureDate": "2025-06-26T11:10:00Z", "downtimeHours": 3 },
+
+  { "vehicleId": "V005", "subsystem": "brakes",       "partId": "BRK-CLEAN",     "failureMode": "contamination",                   "failureDate": "2025-06-09T15:10:00Z", "downtimeHours": 2 },
+  { "vehicleId": "V005", "subsystem": "engine",       "partId": "ENG-OIL-FLTR",  "failureMode": "bypass stuck",                    "failureDate": "2025-03-22T08:30:00Z", "downtimeHours": 5 },
+
+  { "vehicleId": "V009", "subsystem": "engine",       "partId": "ENG-FUEL-FLTR", "failureMode": "air ingress",                     "failureDate": "2025-05-30T10:00:00Z", "downtimeHours": 4 },
+
+  { "vehicleId": "V010", "subsystem": "brakes",       "partId": "BRK-CLEAN",     "failureMode": "dragging caliper",                "failureDate": "2025-04-27T16:20:00Z", "downtimeHours": 3 },
+
+  { "vehicleId": "V011", "subsystem": "engine",       "partId": "ENG-15W40",     "failureMode": "oil contamination alert",         "failureDate": "2025-05-08T08:15:00Z", "downtimeHours": 2 },
+
+  { "vehicleId": "V016", "subsystem": "electrical",   "partId": "ELEC-TERM-KIT", "failureMode": "open circuit",                    "failureDate": "2025-07-02T12:05:00Z", "downtimeHours": 3 },
+
+  { "vehicleId": "V019", "subsystem": "engine",       "partId": "ENG-DPF-GASK",  "failureMode": "exhaust leak @ flange",           "failureDate": "2025-07-18T09:30:00Z", "downtimeHours": 5 },
+
+  { "vehicleId": "V001", "subsystem": "transmission", "partId": "TRN-CLUTCH",    "failureMode": "bearing noise",                   "failureDate": "2025-03-14T11:00:00Z", "downtimeHours": 6 },
+
+  { "vehicleId": "V015", "subsystem": "electrical",   "partId": "ELEC-TERM-KIT", "failureMode": "ECU reset during haul",           "failureDate": "2025-08-13T07:25:00Z", "downtimeHours": 2 }
+]

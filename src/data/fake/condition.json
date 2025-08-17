@@ -1,0 +1,81 @@
+[
+  { "date": "2025-08-22", "vehicleId": "V001", "subsystem": "engine",      "condition": "Good", "degradationRate": 0.02, "notes": "Stable oil analysis" },
+  { "date": "2025-08-22", "vehicleId": "V001", "subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V001", "subsystem": "electrical",  "condition": "Good", "degradationRate": 0.02 },
+
+  { "date": "2025-08-22", "vehicleId": "V002", "subsystem": "engine",      "condition": "Fair", "degradationRate": 0.05, "notes": "Service due" },
+  { "date": "2025-08-22", "vehicleId": "V002", "subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V002", "subsystem": "electrical",  "condition": "Fair", "degradationRate": 0.05 },
+
+  { "date": "2025-08-22", "vehicleId": "V003", "subsystem": "engine",      "condition": "Poor", "degradationRate": 0.10, "notes": "Power loss diagnostics" },
+  { "date": "2025-08-22", "vehicleId": "V003", "subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V003", "subsystem": "electrical",  "condition": "Good", "degradationRate": 0.04 },
+
+  { "date": "2025-08-22", "vehicleId": "V004", "subsystem": "engine",      "condition": "Good", "degradationRate": 0.02 },
+  { "date": "2025-08-22", "vehicleId": "V004", "subsystem": "brakes",      "condition": "Fair", "degradationRate": 0.05 },
+  { "date": "2025-08-22", "vehicleId": "V004", "subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V005", "subsystem": "engine",      "condition": "Fair", "degradationRate": 0.06, "notes": "Brake squeal reported" },
+  { "date": "2025-08-22", "vehicleId": "V005", "subsystem": "brakes",      "condition": "Fair", "degradationRate": 0.06 },
+  { "date": "2025-08-22", "vehicleId": "V005", "subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V006", "subsystem": "engine",      "condition": "Good", "degradationRate": 0.02 },
+  { "date": "2025-08-22", "vehicleId": "V006", "subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V006", "subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V007", "subsystem": "engine",      "condition": "Poor", "degradationRate": 0.10, "notes": "Clutch slipping" },
+  { "date": "2025-08-22", "vehicleId": "V007", "subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V007", "subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V008", "subsystem": "engine",      "condition": "Good", "degradationRate": 0.02 },
+  { "date": "2025-08-22", "vehicleId": "V008", "subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V008", "subsystem": "electrical",  "condition": "Fair", "degradationRate": 0.05 },
+
+  { "date": "2025-08-22", "vehicleId": "V009", "subsystem": "engine",      "condition": "Fair", "degradationRate": 0.06 },
+  { "date": "2025-08-22", "vehicleId": "V009", "subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V009", "subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V010","subsystem": "engine",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V010","subsystem": "brakes",      "condition": "Fair", "degradationRate": 0.05 },
+  { "date": "2025-08-22", "vehicleId": "V010","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V011","subsystem": "engine",      "condition": "Good", "degradationRate": 0.02 },
+  { "date": "2025-08-22", "vehicleId": "V011","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V011","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V012","subsystem": "engine",      "condition": "Fair", "degradationRate": 0.06, "notes": "Cooling spikes" },
+  { "date": "2025-08-22", "vehicleId": "V012","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V012","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V013","subsystem": "engine",      "condition": "Poor", "degradationRate": 0.10 },
+  { "date": "2025-08-22", "vehicleId": "V013","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V013","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V014","subsystem": "engine",      "condition": "Good", "degradationRate": 0.02 },
+  { "date": "2025-08-22", "vehicleId": "V014","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V014","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V015","subsystem": "engine",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V015","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V015","subsystem": "electrical",  "condition": "Fair", "degradationRate": 0.05 },
+
+  { "date": "2025-08-22", "vehicleId": "V016","subsystem": "engine",      "condition": "Fair", "degradationRate": 0.06 },
+  { "date": "2025-08-22", "vehicleId": "V016","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V016","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V017","subsystem": "engine",      "condition": "Good", "degradationRate": 0.02 },
+  { "date": "2025-08-22", "vehicleId": "V017","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V017","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V018","subsystem": "engine",      "condition": "Poor", "degradationRate": 0.10, "notes": "Top-end overhaul scheduled" },
+  { "date": "2025-08-22", "vehicleId": "V018","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V018","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V019","subsystem": "engine",      "condition": "Fair", "degradationRate": 0.06 },
+  { "date": "2025-08-22", "vehicleId": "V019","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V019","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 },
+
+  { "date": "2025-08-22", "vehicleId": "V020","subsystem": "engine",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V020","subsystem": "brakes",      "condition": "Good", "degradationRate": 0.03 },
+  { "date": "2025-08-22", "vehicleId": "V020","subsystem": "electrical",  "condition": "Good", "degradationRate": 0.03 }
+]
