@@ -4,8 +4,17 @@ import { getVehicles, getWorkOrders, getOpsTasks } from '../data/adapter';
 import VehicleGallery from '../components/VehicleGallery';
 import GanttWeek from '../components/GanttWeek';
 import { Kpi } from '../components/Kpis';
+import WorkOrdersModal from '../components/WorkOrdersModal';
 import Agents from '../components/Agents';
-import type { AgentKey, SchedulerPolicy, ReportQuery, QATurn, AgentDecision, PlanContext } from '../types';
+import type {
+  AgentKey,
+  ReportQuery,
+  QATurn,
+  AgentDecision,
+  PlanContext,
+  WorkOrder,
+  OpsTask
+} from '../types';
 import ResourceSummary from '../components/ResourceSummary';
 import DemandSummary from '../components/DemandSummary';
 import { proposeSchedule } from '../agents/scheduler';
@@ -14,7 +23,7 @@ import { analyzeWithLLM, helloSchedulerFact } from '../agents/agentRuntime';
 import { buildKnowledgePack } from '../agents/context';
 import { buildReliabilityPack, analyzeReliabilityWithLLM, helloReliabilityFact } from '../agents/reliability';
 import { buildPartsPack, analyzePartsWithLLM } from '../agents/parts';
-import { reseedGenericTechnicians, applyMutations } from '../data/resourceStore';
+import { reseedGenericTechnicians } from '../data/resourceStore';
 import DemoFooter from '../components/DemoFooter';
 
 type StatusFilter = 'ALL' | 'AVAILABLE' | 'DUE' | 'DOWN';
@@ -32,68 +41,121 @@ type PlanSnapshot = {
   status: 'accepted' | 'preview';
 };
 
-// Narrow to the shape proposeSchedule expects
-type ProposePolicy = { businessHours?: [number, number] };
-function mapPolicy(policy?: unknown): ProposePolicy | undefined {
-  if (policy == null) return undefined;
+// Narrow policy expected by your scheduler
+type SimplePolicy = { businessHours?: [number, number] };
 
-  if (typeof policy === 'string') {
-    const p = policy.toLowerCase();
-    if (p.includes('day') || p === 'daytime_only' || p === 'business_hours') {
-      return { businessHours: [8, 17] };
-    }
-    if (p.includes('extended')) {
-      return { businessHours: [6, 20] };
-    }
-    return undefined;
+// ---- helpers ----
+function inferPolicyFromText(text: string): SimplePolicy | undefined {
+  const t = text.toLowerCase();
+  let bh: [number, number] | undefined;
+  const m1 = t.match(/(\d{1,2})(?::?00)?\s*(am|pm)?\s*[–-]\s*(\d{1,2})(?::?00)?\s*(am|pm)?/i);
+  if (m1) {
+    let s = parseInt(m1[1], 10);
+    let e = parseInt(m1[3], 10);
+    const am1 = m1[2]?.toLowerCase();
+    const am2 = m1[4]?.toLowerCase();
+    if (am1 === 'pm' && s < 12) s += 12;
+    if (am1 === 'am' && s === 12) s = 0;
+    if (am2 === 'pm' && e < 12) e += 12;
+    if (am2 === 'am' && e === 12) e = 0;
+    bh = [Math.min(23, Math.max(0, s)), Math.min(23, Math.max(0, e))] as [number, number];
   }
-
-  if (typeof policy === 'object') {
-    const anyP = policy as any;
-    if (Array.isArray(anyP.businessHours) && anyP.businessHours.length === 2) {
-      return { businessHours: [Number(anyP.businessHours[0]), Number(anyP.businessHours[1])] };
-    }
-  }
-  return undefined;
+  if (!bh && /business hours|day shift|08:00|8am/.test(t)) bh = [8, 17];
+  return bh ? { businessHours: bh } : undefined;
 }
 
-// Utilities for rendering parts/tools whether strings or objects
-function fmtList(list: unknown): string {
-  if (!Array.isArray(list) || list.length === 0) return '—';
-  return list
-    .map((x) => {
-      if (typeof x === 'string') return x;
-      if (x && typeof x === 'object') {
-        const anyX = x as any;
-        return anyX.name ?? anyX.partName ?? anyX.part ?? anyX.tool ?? anyX.id ?? JSON.stringify(anyX);
-      }
-      return String(x);
-    })
-    .join(', ');
+// Normalize to local ISO (no Z) “YYYY-MM-DDTHH:mm:ss”
+function normalizeLocalISO(input?: string): string | null {
+  if (!input) return null;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(input) && !/Z$/.test(input)) return input.slice(0, 19);
+  const d = new Date(input);
+  if (isNaN(d.getTime())) return null;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const HH = String(d.getHours()).padStart(2, '0');
+  const MM = String(d.getMinutes()).padStart(2, '0');
+  const SS = String(d.getSeconds()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T${HH}:${MM}:${SS}`;
 }
+
+function durationMs(start?: string, end?: string, hoursFallback?: number) {
+  if (start && end) {
+    const s = new Date(start).getTime();
+    const e = new Date(end).getTime();
+    if (isFinite(s) && isFinite(e) && e > s) return e - s;
+  }
+  return Math.max(3600000, Math.round((hoursFallback ?? 1) * 3600000));
+}
+
+// Fallback-safe ops id getter (supports opsId, opsID, id)
+function opsKey(x: OpsTask): string {
+  const any = x as any;
+  return String(any.opsId ?? any.opsID ?? any.id ?? '');
+}
+
+// Build a preview snapshot from a *new* workorder array vs an *old* baseline
+function buildPreviewSnapshot(
+  oldWos: WorkOrder[],
+  newWos: WorkOrder[],
+  opts?: { moved?: string[]; scheduled?: string[]; unscheduled?: string[]; summary?: string[] }
+): PlanSnapshot {
+  const idxOld = new Map(oldWos.map(w => [w.id, w]));
+  const moved: string[] = [];
+  const newlyScheduled: string[] = [];
+  const nowUnscheduled: string[] = [];
+
+  const ids = new Set<string>([...oldWos.map(w => w.id), ...newWos.map(w => w.id)]);
+  for (const id of ids) {
+    const a = idxOld.get(id);
+    const b = newWos.find(w => w.id === id);
+    const aSched = !!(a && a.status === 'Scheduled' && a.start);
+    const bSched = !!(b && b.status === 'Scheduled' && b.start);
+    if (aSched && bSched) {
+      if (a!.start !== b!.start || a!.end !== b!.end) moved.push(id);
+    } else if (!aSched && bSched) {
+      newlyScheduled.push(id);
+    } else if (aSched && !bSched) {
+      nowUnscheduled.push(id);
+    }
+  }
+
+  return {
+    workorders: newWos,
+    summary: opts?.summary ?? [],
+    moved: moved.length,
+    scheduled: newlyScheduled.length,
+    unscheduled: nowUnscheduled.length,
+    movedIds: moved,
+    scheduledIds: newlyScheduled,
+    unscheduledIds: nowUnscheduled,
+    when: new Date().toISOString(),
+    status: 'preview',
+  };
+}
+
+// ============ Component ============
 
 export default function Dashboard() {
-  // Seed simplified tech model once (Mechanic/AutoElec, smaller team)
+  // Seed simplified tech model once
   useEffect(() => { reseedGenericTechnicians(); }, []);
 
   // Base data
   const vehicles = useMemo(() => getVehicles(20), []);
   const [workorders, setWorkorders] = useState(() => getWorkOrders());
-  const opsTasks = useMemo(() => getOpsTasks(7), []);
+  const [opsTasks, setOpsTasks] = useState<OpsTask[]>(() => getOpsTasks(7)); // stateful so we can mutate
 
   // UI state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
 
-  // Lightweight WO details modal (Gantt click)
-  const [detailWoId, setDetailWoId] = useState<string | null>(null);
-
-  // Lightweight Outstanding list modal (KPI click)
-  const [listOpen, setListOpen] = useState(false);
+  const [woOpen, setWoOpen] = useState(false);
+  const [modalIgnoreVehicle, setModalIgnoreVehicle] = useState(false);
+  const [focusedWorkOrderId, setFocusedWorkOrderId] = useState<string | null>(null);
 
   // Planning state
   const [preview, setPreview] = useState<PlanSnapshot | null>(null);
-  const [planHistory, setPlanHistory] = useState<PlanSnapshot[]>([]); // keep last ~6
+  const [planHistory, setPlanHistory] = useState<PlanSnapshot[]>([]);
 
   // Active agent + hello injection
   const [activeAgent, setActiveAgent] = useState<AgentKey>('scheduler');
@@ -130,19 +192,17 @@ export default function Dashboard() {
     return selectedVehicleId ? base.filter(t => t.vehicleId === selectedVehicleId) : base;
   }, [opsTasks, visibleVehicleIds, selectedVehicleId]);
 
-  // Outstanding list, scoped to current vehicle filter (matches “as it used to” behavior)
-  const outstandingList = useMemo(() => {
-    const src = baseWorkorders
-      .filter(w => (w.status === 'Open' || w.status === 'Scheduled' || w.status === 'In Progress'))
+  const outstandingForModal = useMemo(() => {
+    const source = baseWorkorders;
+    if (focusedWorkOrderId) {
+      const item = source.find(w => w.id === focusedWorkOrderId);
+      return item ? [item] : [];
+    }
+    const base = source
+      .filter(w => w.status === 'Open' || w.status === 'Scheduled' || w.status === 'In Progress')
       .filter(w => visibleVehicleIds.has(w.vehicleId));
-    return selectedVehicleId ? src.filter(w => w.vehicleId === selectedVehicleId) : src;
-  }, [baseWorkorders, visibleVehicleIds, selectedVehicleId]);
-
-  // For the detail modal, read from the same base list the Gantt is using
-  const detailWo = useMemo(
-    () => (detailWoId ? baseWorkorders.find(w => w.id === detailWoId) ?? null : null),
-    [detailWoId, baseWorkorders]
-  );
+    return (!modalIgnoreVehicle && selectedVehicleId) ? base.filter(w => w.vehicleId === selectedVehicleId) : base;
+  }, [baseWorkorders, focusedWorkOrderId, selectedVehicleId, visibleVehicleIds, modalIgnoreVehicle]);
 
   // UI helper
   const chip = (label: string, val: StatusFilter) => (
@@ -161,10 +221,10 @@ export default function Dashboard() {
   );
 
   // ====== Agent hooks ======
-
   const agentDecide = async (text: string, history: QATurn[]): Promise<AgentDecision> => {
     if (activeAgent === 'scheduler') {
       const baseWos = preview ? preview.workorders : workorders;
+      // NOTE: do not pass opsTasks here unless your buildKnowledgePack signature supports it
       const pack = buildKnowledgePack({ horizonDays: 7, baseWorkorders: baseWos });
       const planCtx: PlanContext = {
         lastAccepted: planHistory.at(-1) ? {
@@ -202,9 +262,8 @@ export default function Dashboard() {
     return { intent: 'QA', answer: `The ${activeAgent} agent isn’t wired up yet — try Scheduler, Reliability, or Parts.` };
   };
 
-  const agentSuggest = async (policy?: SchedulerPolicy) => {
-    const p = mapPolicy(policy);
-    const res = proposeSchedule(workorders, opsTasks, p);
+  const agentSuggest = async (policy?: SimplePolicy) => {
+    const res = proposeSchedule(workorders, opsTasks, policy);
     const snap: PlanSnapshot = {
       workorders: res.workorders,
       summary: res.rationale,
@@ -220,6 +279,24 @@ export default function Dashboard() {
     setPreview(snap);
     setSelectedVehicleId(null);
     return { moved: res.moved, scheduled: res.scheduled, unscheduled: res.unscheduled, notes: res.rationale };
+  };
+
+  // onSuggest wrapper for AgentConsole signature (policy?: unknown)
+  const onSuggestWrapper = async (policy?: unknown) => {
+    let narrowed: SimplePolicy | undefined = undefined;
+    if (policy && typeof policy === 'object') {
+      const p = policy as Partial<SimplePolicy>;
+      if (
+        p.businessHours &&
+        Array.isArray(p.businessHours) &&
+        p.businessHours.length === 2 &&
+        typeof p.businessHours[0] === 'number' &&
+        typeof p.businessHours[1] === 'number'
+      ) {
+        narrowed = { businessHours: [p.businessHours[0], p.businessHours[1]] };
+      }
+    }
+    return agentSuggest(narrowed);
   };
 
   const agentAccept = () => {
@@ -308,6 +385,17 @@ export default function Dashboard() {
       }
     }
 
+    if (q.kind === 'MOVED') {
+      if (plan) {
+        const items = pick(plan.movedIds);
+        return items.length
+          ? `${plan.status === 'preview' ? 'Moved in the current proposal' : 'Moved in the last accepted plan'}:\n- ${items.join('\n- ')}`
+          : 'No maintenance tasks were moved in this context.';
+      } else {
+        return 'I don’t have a baseline to determine what moved. Ask me to “suggest a new schedule” and accept it first.';
+      }
+    }
+
     if (q.kind === 'SCHEDULED_FOR_VEHICLE' && q.vehicleId) {
       if (plan) {
         const scheduledForV = planWorkorders
@@ -323,18 +411,6 @@ export default function Dashboard() {
         return scheduledForV.length
           ? `Currently scheduled for ${q.vehicleId}:\n- ${scheduledForV.join('\n- ')}`
           : `No scheduled maintenance found for ${q.vehicleId}.`;
-      }
-    }
-
-    if (q.kind === 'MOVED') {
-      const planOrNow = plan ?? null;
-      if (planOrNow) {
-        const items = pick(planOrNow.movedIds);
-        return items.length
-          ? `${planOrNow.status === 'preview' ? 'Moved in the current proposal' : 'Moved in the last accepted plan'}:\n- ${items.join('\n- ')}`
-          : 'No maintenance tasks were moved in this context.';
-      } else {
-        return 'I don’t have a baseline to determine what moved. Ask me to “suggest a new schedule” and accept it first.';
       }
     }
 
@@ -359,12 +435,136 @@ export default function Dashboard() {
     activeAgent === 'reliability' ? 'Reliability Agent' :
                                      'Parts Interpreter';
 
-  // Apply MUTATE instructions coming from the Scheduler Agent
+  // ====== Apply agent mutations LOCALLY to preview (so Gantt updates immediately) ======
+  type GenericMutation = {
+    op: string;
+    id?: string;       // WO id or Ops id (fallback)
+    woId?: string;
+    opsId?: string;
+    vehicleId?: string;
+    startISO?: string;
+    endISO?: string;
+    hours?: number;
+    title?: string;
+    priority?: string;
+    type?: string;     // 'PM' | 'CM' etc.
+    requiredSkills?: string[];
+  };
+
+  const applyMutationsLocally = (mutations: GenericMutation[]) => {
+    const baseline = preview ? preview.workorders : workorders;
+    const wos = baseline.map(w => ({ ...w }));
+    let ops = opsTasks.map(t => ({ ...t }));
+
+    const summary: string[] = [];
+    const movedIdsManual: string[] = [];
+    const scheduledIdsManual: string[] = [];
+    const unscheduledIdsManual: string[] = [];
+
+    const idOr = (m: GenericMutation) => m.woId || m.opsId || m.id;
+
+    for (const m of mutations) {
+      const op = (m.op || '').toUpperCase();
+
+      if (op === 'MOVE_WORKORDER') {
+        const id = m.woId || m.id;
+        if (!id) { summary.push('MOVE_WORKORDER: missing id'); continue; }
+        const w = wos.find(x => x.id === id);
+        if (!w) { summary.push(`MOVE_WORKORDER: ${id} not found`); continue; }
+        const sLocal = normalizeLocalISO(m.startISO);
+        if (!sLocal) { summary.push(`MOVE_WORKORDER: ${id} invalid start`); continue; }
+        const dur = durationMs(w.start, w.end, w.hours);
+        const eLocal = normalizeLocalISO(new Date(new Date(sLocal).getTime() + dur).toISOString())!;
+        w.start = sLocal;
+        w.end = eLocal;
+        w.status = 'Scheduled';
+        movedIdsManual.push(id);
+        summary.push(`Moved ${id} → ${sLocal.slice(11,16)}`);
+      }
+
+      else if (op === 'MOVE_OPS' || op === 'MOVE_OP') {
+        const oid = idOr(m);
+        if (!oid) { summary.push('MOVE_OPS: missing opsId'); continue; }
+        const t = ops.find(x => opsKey(x) === oid);
+        if (!t) { summary.push(`MOVE_OPS: ${oid} not found`); continue; }
+        const sLocal = normalizeLocalISO(m.startISO);
+        if (!sLocal) { summary.push(`MOVE_OPS: ${oid} invalid start`); continue; }
+        const dur = durationMs(t.start, t.end, undefined);
+        const eLocal = normalizeLocalISO(new Date(new Date(sLocal).getTime() + dur).toISOString())!;
+        t.start = sLocal;
+        t.end = eLocal;
+        summary.push(`Moved Ops ${oid} → ${sLocal.slice(0,16).replace('T',' ')}`);
+      }
+
+      else if (op === 'CANCEL_OPS') {
+        const oid = idOr(m);
+        if (!oid) { summary.push('CANCEL_OPS: missing id'); continue; }
+        const before = ops.length;
+        ops = ops.filter(x => opsKey(x) !== oid);
+        const removed = before - ops.length;
+        summary.push(removed ? `Cancelled Ops ${oid}` : `CANCEL_OPS: ${oid} not found`);
+      }
+
+      else if (op === 'ADD_WORKORDER') {
+        const vid = m.vehicleId;
+        if (!vid) { summary.push('ADD_WORKORDER: missing vehicleId'); continue; }
+        const newId = m.id || m.woId || `WO-${Math.floor(100 + Math.random()*900)}`;
+        const sLocal = normalizeLocalISO(m.startISO) || '2025-08-22T09:00:00';
+        const dur = Math.max(1, Math.round((m.hours ?? 1)));
+        const eLocal = normalizeLocalISO(new Date(new Date(sLocal).getTime() + dur*3600000).toISOString())!;
+        const w: WorkOrder = {
+          id: newId,
+          vehicleId: vid,
+          title: m.title || 'Inspection',
+          type: (m.type as any) || 'CM',
+          priority: (m.priority as any) || 'Medium',
+          status: 'Scheduled',
+          hours: dur,
+          start: sLocal,
+          end: eLocal,
+          subsystem: undefined,
+          //partId: undefined,               // NOTE: partId (not partID)
+          requiredSkills: (m.requiredSkills as any) || ['Mechanic'],
+          requiredParts: [],
+          requiredTools: [],
+          description: 'Added by Scheduler Agent',
+        };
+        wos.push(w);
+        scheduledIdsManual.push(newId);
+        summary.push(`Created ${newId} on ${vid} (${w.title})`);
+      }
+
+      else if (op === 'CANCEL_WORKORDER') {
+        const id = m.woId || m.id;
+        if (!id) { summary.push('CANCEL_WORKORDER: missing id'); continue; }
+        const w = wos.find(x => x.id === id);
+        if (!w) { summary.push(`CANCEL_WORKORDER: ${id} not found`); continue; }
+        // mark as closed in preview
+        w.status = 'Closed';
+        unscheduledIdsManual.push(id);
+        summary.push(`Cancelled ${id}`);
+      }
+
+      else {
+        summary.push(`Unknown mutation ${op} — ignored`);
+      }
+    }
+
+    // Build preview and surface immediately
+    const snap = buildPreviewSnapshot(preview ? preview.workorders : workorders, wos, {
+      moved: movedIdsManual,
+      scheduled: scheduledIdsManual,
+      unscheduled: unscheduledIdsManual,
+      summary,
+    });
+    setPreview(snap);
+    setOpsTasks(ops); // reflect ops changes too
+    return summary;
+  };
+
   const handleDecisionSideEffects = (d: AgentDecision) => {
     if (d.intent === 'MUTATE' && d.mutations?.length) {
-      const notes = applyMutations(d.mutations);
-      // After resource/parts changes, re-run a quick proposal to reflect capacity/parts
-      agentSuggest(undefined);
+      const notes = applyMutationsLocally(d.mutations as any);
       return (d.answer ? d.answer + '\n' : '') + `Applied changes:\n- ${notes.join('\n- ')}`;
     }
     return d.answer ?? undefined;
@@ -374,10 +574,15 @@ export default function Dashboard() {
     <div className="p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:[grid-template-columns:1fr_18rem] gap-6">
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Kpi title="No Outstanding Maintenance" value={clear} onClick={() => setStatusFilter('AVAILABLE')} />
-          <Kpi title="Outstanding Maintenance" value={due} onClick={() => setStatusFilter('DUE')} />
-          <Kpi title="Broken / In Workshop" value={down} onClick={() => setStatusFilter('DOWN')} />
-          <Kpi title="Outstanding Work Orders" value={outstanding.length} onClick={() => setListOpen(true)} />
+          <Kpi title="No Outstanding Maintenance" value={clear} />
+          <Kpi title="Outstanding Maintenance" value={due} />
+          <Kpi title="Broken / In Workshop" value={down} />
+          <Kpi
+            title="Outstanding Work Orders"
+            value={outstanding.length}
+            sub="Click to view details"
+            onClick={() => { setFocusedWorkOrderId(null); setModalIgnoreVehicle(false); setWoOpen(true); }}
+          />
           <Kpi title="Maintenance Backlog (hrs)" value={backlogHrs} />
         </div>
 
@@ -394,15 +599,35 @@ export default function Dashboard() {
         <AgentConsole
           title={agentTitle}
           hasPreview={!!preview}
-          onSuggest={agentSuggest}
+          onSuggest={async (policy?: unknown) => {
+            let narrowed: SimplePolicy | undefined;
+            if (policy && typeof policy === 'object' && (policy as any).businessHours) {
+              const bh = (policy as any).businessHours;
+              if (Array.isArray(bh) && bh.length === 2 && typeof bh[0] === 'number' && typeof bh[1] === 'number') {
+                narrowed = { businessHours: [bh[0], bh[1]] };
+              }
+            }
+            return agentSuggest(narrowed);
+          }}
           onAccept={agentAccept}
           onReject={agentReject}
           onReport={agentReport}
           onDecide={async (text, history) => {
             const decision = await agentDecide(text, history);
-            // If scheduler asked to mutate resources/parts, apply them here:
-            const maybeMsg = handleDecisionSideEffects(decision);
-            return maybeMsg ? { ...decision, intent: decision.intent === 'MUTATE' ? 'QA' : decision.intent, answer: maybeMsg } : decision;
+            if (decision.intent === 'MUTATE') {
+              const msg = handleDecisionSideEffects(decision);
+              return { intent: 'QA', answer: msg ?? 'Applied the requested changes.' };
+            }
+            const looksLikeOptimize = /optimi[sz]e|re-?schedule|plan( the)? week|optimize the schedule/i.test(text);
+            if (looksLikeOptimize) {
+              const policy = inferPolicyFromText(text);
+              const res = await agentSuggest(policy);
+              const msg = decision.answer
+                ? `${decision.answer}\n\nProposed schedule ready — moved ${res.moved}, scheduled ${res.scheduled}, unscheduled ${res.unscheduled}.`
+                : `Proposed schedule ready — moved ${res.moved}, scheduled ${res.scheduled}, unscheduled ${res.unscheduled}.`;
+              return { intent: 'QA', answer: msg };
+            }
+            return decision;
           }}
           helloMessage={helloMessage}
           helloNonce={helloNonce}
@@ -461,112 +686,17 @@ export default function Dashboard() {
           vehicles={visibleVehicles}
           workorders={visibleWorkorders}
           opsTasks={visibleOpsTasks}
-          onTaskClick={(woId) => setDetailWoId(woId)} // click → details pop-up
+          onTaskClick={(woId) => { setFocusedWorkOrderId(woId); setModalIgnoreVehicle(true); setWoOpen(true); }}
         />
       </div>
 
       <VehicleGallery vehicles={visibleVehicles} selectedId={selectedVehicleId} onSelect={setSelectedVehicleId} />
 
-      {/* Outstanding Work Orders — lightweight modal */}
-      {listOpen && (
-        <div className="fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setListOpen(false)} />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(44rem,92vw)] rounded-xl border border-slate-800 bg-slate-900 p-4 z-50 shadow-2xl">
-            <div className="flex items-start justify-between gap-3 mb-2">
-              <div className="text-slate-100 text-sm font-semibold">Outstanding Work Orders</div>
-              <button
-                onClick={() => setListOpen(false)}
-                className="text-slate-300 hover:text-white text-sm px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700"
-              >
-                Close
-              </button>
-            </div>
-            <div className="max-h-[60vh] overflow-auto divide-y divide-slate-800">
-              {outstandingList.length === 0 ? (
-                <div className="text-slate-400 text-sm py-6 text-center">No outstanding items in the current view.</div>
-              ) : (
-                outstandingList.map((w) => (
-                  <button
-                    key={w.id}
-                    onClick={() => { setDetailWoId(w.id); setListOpen(false); }}
-                    className="w-full text-left px-2 py-2 hover:bg-slate-800/60"
-                    title={`${w.id} — ${w.title}`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-slate-200 text-sm font-medium">{w.id} — {w.title}</div>
-                      <div className="text-xs text-slate-400">{w.vehicleId}</div>
-                    </div>
-                    <div className="text-xs text-slate-400">
-                      {w.priority} • {w.type} • {w.status}
-                      {w.start && w.end && (
-                        <> • {new Date(w.start).toLocaleString()} → {new Date(w.end).toLocaleTimeString()}</>
-                      )}
-                    </div>
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Work Order Details — lightweight modal */}
-      {detailWo && (
-        <div className="fixed inset-0 z-40">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setDetailWoId(null)} />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(34rem,92vw)] rounded-xl border border-slate-800 bg-slate-900 p-4 z-50 shadow-2xl">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="text-slate-200 text-sm font-semibold">{detailWo.id} — {detailWo.title}</div>
-                <div className="text-xs text-slate-400">
-                  {detailWo.vehicleId} • {detailWo.type} • {detailWo.priority} • {detailWo.status}
-                </div>
-              </div>
-              <button
-                onClick={() => setDetailWoId(null)}
-                className="text-slate-300 hover:text-white text-sm px-2 py-1 rounded-md bg-slate-800 hover:bg-slate-700"
-              >
-                Close
-              </button>
-            </div>
-
-            <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2">
-                <div className="text-slate-400 text-xs">Timing</div>
-                <div className="text-slate-200">
-                  {detailWo.start ? new Date(detailWo.start).toLocaleString() : '—'} → {detailWo.end ? new Date(detailWo.end).toLocaleString() : '—'}
-                </div>
-                {typeof detailWo.hours === 'number' && (
-                  <div className="text-slate-400 text-xs mt-1">Duration: <span className="text-slate-200">{detailWo.hours} h</span></div>
-                )}
-              </div>
-
-              <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2">
-                <div className="text-slate-400 text-xs">Skills & Technician</div>
-                <div className="text-slate-200">
-                  {(detailWo.requiredSkills?.length ? detailWo.requiredSkills.join(', ') : (detailWo.subsystem === 'electrical' ? 'AutoElec' : 'Mechanic'))}
-                </div>
-                {detailWo.technicianId && (
-                  <div className="text-slate-400 text-xs mt-1">Assigned: <span className="text-slate-200">{detailWo.technicianId}</span></div>
-                )}
-              </div>
-
-              <div className="rounded-md border border-slate-800 bg-slate-950/60 p-2 col-span-2">
-                <div className="text-slate-400 text-xs">Parts & Tools</div>
-                <div className="text-slate-200">Parts: {fmtList(detailWo.requiredParts)}</div>
-                <div className="text-slate-200 mt-1">Tools: {fmtList(detailWo.requiredTools)}</div>
-                {detailWo.description && (
-                  <>
-                    <div className="text-slate-400 text-xs mt-2">Notes:</div>
-                    <div className="text-slate-200">{detailWo.description}</div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <WorkOrdersModal
+        open={woOpen}
+        onClose={() => { setWoOpen(false); setModalIgnoreVehicle(false); setFocusedWorkOrderId(null); }}
+        workorders={outstandingForModal}
+      />
       <DemoFooter />
     </div>
   );

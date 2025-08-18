@@ -1,26 +1,85 @@
-Scenario script (use these exact messages in the Agent Console)
+Phase 0 — Set the stage
 
-You → Reliability Agent
-“Are there any vehicles with high or increasing failure rates in the last 6 months?”
+Click Hello Reliability Agent.
+Say: “Are there any high failure rates or increasing trends across the fleet?”
+Expect: thermostat trend called out; a couple of vehicles flagged (engine/transmission).
 
-Expected: It calls out (for example) V003 (engine), V007 (transmission), and a fleet-wide thermostat uptick in the last ~2 months.
+Say: “Which vehicles are most affected, and what’s the likely root cause?”
+Expect: specific vehicles + “thermostat batch issue” hypothesis and a suggested action (inspections/PM tweak).
 
-You → Reliability Agent
-“What’s the likely root cause behind the thermostat uptick, and what’s a quick action to confirm?”
+Phase 1 — Whole-week optimization (Scheduler)
 
-Expected: It hypothesizes a bad thermostat batch from one supplier, suggests a targeted inspection on a similar vehicle (e.g., V012) and to sample the part’s lot code.
+Click Hello Scheduler Agent.
+Say: “Optimize this week so all maintenance runs 08:00–17:00 and allow shifting ops tasks within ±1 day. Avoid ops overlaps.”
+Expect: intent=PROPOSE with a preview (moved/scheduled/unscheduled).
+Click Accept.
+Watch: Gantt shifts; Demand and Resource cards recalc.
 
-You → Scheduler Agent
-“Create and schedule a 1-hour Thermostat Inspection for V012 tomorrow morning with a Mechanic. Make it Medium priority.”
+Say: “What moved vs the last plan?”
+Expect: a moved list summary (QA report).
 
-Expected: The agent creates a new work order (e.g., WO-INSPECT-V012) and schedules it in the next 7-day window.
+Phase 2 — Targeted maintenance moves + new WO
 
-You (notice a clash on the Gantt) → Scheduler Agent
-“Cancel the operational task that conflicts with WO-INSPECT-V012.”
+Pick a visible WO from the Gantt (e.g., WO-011).
+Say: “Move WO-011 to start at 9:00 on 22 Aug (keep duration).”
+Expect: intent=MUTATE with one MOVE_WORKORDER; preview shows only that change.
+Click Accept.
 
-Expected: The agent cancels the conflicting ops task and refreshes the preview so the maintenance stands.
+Create inspection from reliability clue:
+Say: “Create a 1h Thermostat Inspection on V012 for 22 Aug 10:00, Mechanic, priority Medium.”
+Expect: intent=MUTATE with ADD_WORKORDER; preview shows the new WO.
+Click Accept.
 
-You → Parts Interpreter
-“If the inspection confirms a faulty batch, what thermostat should we order across the fleet and how many?”
+Check for conflicts:
+Say: “What’s scheduled for V012 on 22 Aug?”
+Expect: list of WOs/ops; note an ops clash if present.
 
-Expected: A realistic fictional part suggestion (P/N, supplier, cost, lead time) and a fleet-wide qty recommendation with a short justification.
+Phase 3 — Operations control
+
+Hover the conflicting ops bar on the Gantt for V012 to read its OpsID (e.g., OPS-123).
+Say: “Cancel OPS-123 to resolve V012’s conflict.”
+Expect: intent=MUTATE with CANCEL_OPS; preview shows ops removed.
+Click Accept.
+Watch: Gantt updates; Demand card and Resource card adjust.
+
+Try a vehicle-wide reshuffle:
+Say: “For V005, move all its maintenance to 22 Aug (business hours) and shift its ops tasks to other days this week without overlaps.”
+Expect: intent=MUTATE with a small set (MOVE_WORKORDER + MOVE_OPS); preview reflects only V005.
+Click Accept.
+
+Phase 4 — Resources & constraints
+
+Say: “Add technician T-EXTRA (Mechanic) with 8h availability each day this week.”
+Expect: intent=MUTATE with ADD_TECH/SET_AVAILABILITY; preview then shows more scheduled work.
+Click Accept.
+Watch: Resource Utilisation rises appropriately.
+
+Optional parts constraint:
+Say: “Assume Thermostat is available by 24 Aug; re-optimize remaining maintenance inside business hours.”
+Expect: ASSUME_PART_AVAILABLE + PROPOSE; preview reduces ‘unscheduled’.
+Click Accept.
+
+Phase 5 — Parts Interpreter (purchase suggestion)
+
+Click Hello Parts Interpreter.
+Say: “Draft a purchase order for thermostats to cover the fleet trend—use realistic SKU, supplier, lead time, cost, and a quantity rationale.”
+Expect: a clean recommendation (SKU, supplier, lead time, unit cost, quantity + rationale).
+(If you want WO context: “For WO-011, what parts should we stage?”)
+
+Phase 6 — Quick wrap-up checks
+
+Scheduler report: “Which maintenance couldn’t be scheduled?”
+Expect: list based on preview/accepted state.
+
+Reliability follow-up: “Given the thermostat trend, should we adjust PM or add a temporary inspection task across the fleet?”
+Expect: specific, actionable suggestion (e.g., monthly check or supplier QA).
+
+Tips if something doesn’t apply first time
+
+If the Scheduler says an ID is unknown, ask: “List ops IDs for V012 this week.” or “Show unscheduled maintenance.” Then repeat the precise mutation by ID.
+
+After any preview, Accept to apply; the Gantt + Demand/Resource cards will recompute.
+
+Keep times and dates explicit to nudge MUTATE (e.g., “9:00 on 22 Aug”).
+
+This sequence demonstrates: global optimization, targeted maintenance moves, creating/canceling work orders, moving/canceling ops by OpsID (no overlaps), changing resources, assuming parts availability, reliability insights → actions, and parts procurement—all with the agents leaning on the LLM and the UI reflecting changes live.
