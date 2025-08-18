@@ -2,38 +2,42 @@ import React, { useMemo } from 'react';
 import { getDemandHistory } from '../data/adapter';
 import type { DemandRecord } from '../types';
 
-// Local date only for label formatting
-function parseLocalDateOnly(iso?: string) {
-  if (!iso) return null;
-  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!m) return null;
-  const [, y, mo, d] = m;
-  const dt = new Date(Number(y), Number(mo) - 1, Number(d), 0, 0, 0, 0);
-  return Number.isNaN(dt.getTime()) ? null : dt;
+// Fixed week labels anchored to 22 Aug 2025 for consistent display
+const WEEK_START = new Date('2025-08-23T00:00:00');
+
+function ymd(d: Date) { return d.toISOString().slice(0, 10); }
+function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function shortLabel(d: Date) {
+  const w = d.toLocaleDateString(undefined, { weekday: 'short' });
+  const m = d.toLocaleDateString(undefined, { month: 'short' });
+  const day = d.toLocaleDateString(undefined, { day: '2-digit' });
+  return `${w}, ${day} ${m}`;
 }
 
 export default function DemandSummary() {
   const horizon = 7;
+
+  // Demand records (hours per day)
   const raw: DemandRecord[] = useMemo(() => (getDemandHistory?.(horizon) ?? []), [horizon]);
 
-  // Aggregate total hours by date string (YYYY-MM-DD)
-  const byDate = new Map<string, number>();
+  // Build fixed week day keys and pretty labels
+  const dayKeys = useMemo(() => {
+    return Array.from({ length: horizon }, (_, i) => ymd(addDays(WEEK_START, i)));
+  }, [horizon]);
+  const pretty = useMemo(() => dayKeys.map(d => shortLabel(new Date(`${d}T00:00:00`))), [dayKeys]);
+
+  // Aggregate into the fixed keys so ordering and labels are stable
+  const byDate = new Map<string, number>(dayKeys.map(k => [k, 0]));
   for (const r of raw) {
-    const d = String((r as any).date ?? '').slice(0, 10);
+    const d = (r.date ?? '').slice(0, 10);
     if (!d) continue;
-    byDate.set(d, (byDate.get(d) ?? 0) + Number((r as any).operatingHours ?? (r as any).hours ?? 0));
+    if (!byDate.has(d)) continue;
+    byDate.set(d, (byDate.get(d) ?? 0) + (r.hours ?? 0));
   }
 
-  // Sorted arrays for charting
-  const days = Array.from(byDate.entries()).sort(([a], [b]) => a.localeCompare(b));
-  const labels = days.map(([d]) => {
-    const dt = parseLocalDateOnly(d) ?? new Date(`${d}T00:00:00`);
-    const wd = dt.toLocaleDateString(undefined, { weekday: 'short' }); // Mon
-    const dd = String(dt.getDate()).padStart(2, '0');                  // 22
-    const mon = dt.toLocaleDateString(undefined, { month: 'short' });  // Aug
-    return `${wd}, ${dd} ${mon}`;
-  });
-  const values = days.map(([, h]) => h);
+  // Sorted arrays for charting (already ordered)
+  const labels = pretty;
+  const values = dayKeys.map(k => byDate.get(k) ?? 0);
   const total = values.reduce((a, b) => a + b, 0);
   const avgPerDay = values.length ? Math.round((total / values.length) * 10) / 10 : 0;
   const peak = values.length ? Math.max(...values) : 0;
@@ -55,13 +59,16 @@ export default function DemandSummary() {
         ))}
       </div>
 
-      {/* Visible day labels under bars (Mon, 22 Aug) */}
-      <div className="grid grid-cols-7 gap-1 mt-1 mb-2">
-        {labels.map((lab, i) => (
-          <div key={i} className="text-[11px] text-slate-400 text-center truncate">{lab}</div>
+      {/* Day labels under the bars */}
+      <div className="grid grid-cols-7 gap-1 mt-1 mb-3">
+        {labels.map((txt, i) => (
+          <div key={i} className="text-[10px] text-slate-400 text-center truncate" title={txt}>
+            {txt}
+          </div>
         ))}
       </div>
 
+      {/* Keep it lightweight — no extra summary cards (you asked to reduce duplicate cards) */}
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div className="rounded-md bg-slate-800/60 border border-slate-700 p-2">
           <div className="text-slate-400">Total Demand</div>

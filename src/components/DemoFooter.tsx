@@ -1,33 +1,39 @@
 // src/components/DemoFooter.tsx
 import React from 'react';
-import { getDemoWeekStart } from '../data/adapter';
-// Local helpers to mirror old API
-const demoNow = () => new Date(getDemoWeekStart());
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+
+const WEEK_START = new Date('2025-08-22T00:00:00');
+
+function addDays(d: Date, n: number) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+function fmt(d: Date) {
+  // e.g. "Fri, 22 Aug"
+  return d.toLocaleDateString(undefined, {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+  });
+}
 
 export default function DemoFooter() {
-  const date = ymd(demoNow());
-  const repo = (import.meta.env.VITE_REPO_URL as string | undefined) || '';
+  const start = WEEK_START;
+  const end = addDays(start, 6);
 
   return (
-    <div className="fixed bottom-2 right-2 z-50">
-      <div className="rounded-lg border border-slate-800 bg-slate-900/80 backdrop-blur px-3 py-2 flex items-center gap-3 text-xs text-slate-300 shadow-lg">
+    <footer className="text-[11px] text-slate-400 mt-4">
+      <div className="rounded-lg border border-slate-800 bg-slate-900/60 p-2">
         <div>
-          <span className="text-slate-500">Demo date:</span>{' '}
-          <span className="text-slate-100 font-medium">{date}</span>
+          Demo window:&nbsp;
+          <span className="text-slate-300">{fmt(start)}</span>
+          &nbsp;→&nbsp;
+          <span className="text-slate-300">{fmt(end)}</span>
         </div>
-        {repo ? (
-          <a
-            href={repo}
-            target="_blank"
-            rel="noreferrer"
-            className="px-2 py-1 rounded border border-slate-700 bg-slate-800/70 text-slate-200 hover:bg-slate-700/70"
-            title="Open GitHub repo"
-          >
-            GitHub
-          </a>
-        ) : null}
+        <div className="mt-1">
+          Tip: ask the Scheduler, Reliability, or Parts agents questions in the console above.
+        </div>
       </div>
-    </div>
+    </footer>
   );
 }

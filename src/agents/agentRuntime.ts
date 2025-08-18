@@ -3,10 +3,9 @@ import type { AgentDecision, QATurn } from '../types';
 import { buildKnowledgePack } from './context';
 
 const FACTS = [
-  'Tip: schedule short inspections in low-demand windows to avoid cancelling ops.',
-  'Ask me to “move WO-011 to 2025-08-22 10:00–12:00”.',
-  'Say “move OP-007 to tomorrow 13:00–17:00” to reschedule an ops task by ID.',
-  'Say “within ±1 day, shift ops so all maintenance runs 09:00–17:00” for a global re-balance.',
+  'Tip: say “move OP-007 to 2025-08-23 13:00–17:00”.',
+  'You can target one vehicle: “for V005 move all maintenance to 2025-08-22 and ops to other days this week”.',
+  'Say “within ±1 day, shift ops so all maintenance runs 09:00–17:00; propose a schedule”.',
 ];
 export function helloSchedulerFact(): string {
   return FACTS[Math.floor(Math.random() * FACTS.length)];
@@ -49,26 +48,27 @@ function parseAssistant(content: string): { decision: 'QA'|'MUTATE'|'SUGGEST', a
 
 const SCHED_SYSTEM = `
 You are the Scheduler Agent for a fleet maintenance operation.
-You see a summarized JSON of the current plan/state and may propose JSON "mutations" for the app to apply.
 
-VERY IMPORTANT BEHAVIOR:
-- If the user gives a DIRECT EDIT (e.g., “move WO-011 to 2025-08-22 09:00–10:00”, or “move OP-007 to 2025-08-23 13:00–17:00”), perform ONLY that edit:
-  - For maintenance: emit MOVE_WORKORDER with that id/start/end.
-  - For ops tasks: emit MOVE_OPS_TASK with that id/start/end.
-  Do NOT move or reschedule anything else unless asked to "suggest/optimise/re-balance".
-- If the user asks to "suggest/optimise/re-balance", return decision "SUGGEST" with an optional "policy" object.
-  Example policy:
+CRITICAL RULES:
+- If the user gives a DIRECT edit, emit a single MUTATE with only the needed mutations:
+  • “move WO-011 to 2025-08-22 09:00–11:00” → MOVE_WORKORDER for WO-011 only.
+  • “move OP-007 to 2025-08-23 13:00–17:00” → MOVE_OPS_TASK for OP-007 only.
+- If the user targets ONE VEHICLE and a DATE (e.g., “for V005 move all maintenance to 2025-08-22 and move all ops to other days this week”):
+  • Emit a MUTATE with:
+     - MOVE_WORKORDER for all WOs of that vehicle to the target date within business hours 09:00–17:00 (keep each WO duration).
+     - MOVE_OPS_TASK for all ops of that vehicle on that date; shift them to any other day of the same week with the same times if possible.
+  • Do NOT touch any other vehicles. Do NOT propose a global schedule.
+- If the user says “optimise”, “rebalance”, “propose a schedule”, etc., return SUGGEST with a policy:
   {
     "forceBusinessHours": true,
     "businessHours": [9, 17],
-    "opsFlexDays": 1   // allow ops tasks to move within ±1 day from their original start
+    "opsFlexDays": 1
   }
-  The app will then apply a bulk re-balance using this policy and propose a new schedule.
-- Dates must be local wall-clock ISO without a timezone suffix (e.g., 2025-08-22T09:00:00).
-- Keep changes within the static demo week starting 2025-08-22.
-- Never invent vehicles.
 
-Return ONLY a single JSON object in a \`\`\`json fenced block with:
+TIME FORMAT: local wall-clock ISO without “Z”: YYYY-MM-DDTHH:MM:SS
+WEEK: fixed demo week starting 2025-08-22.
+
+Return ONLY a single JSON object in a \`\`\`json block with:
 {
   "decision": "MUTATE" | "SUGGEST" | "QA",
   "answer": "short human explanation",
@@ -82,13 +82,7 @@ Return ONLY a single JSON object in a \`\`\`json fenced block with:
      { "type": "CANCEL_WORKORDER", "id": string },
 
      { "type": "ADD_OPS_TASK", "task": { "id": string, "vehicleId": string, "title": string, "start": string, "end": string } },
-     { "type": "CANCEL_OPS_TASK", "id": string },
-     { "type": "CANCEL_OPS_TASK", "conflictsWith": "WO-..." },
-
-     { "type": "ADD_TECH", "tech": { "id": string, "name": string, "skills": string[] } },
-     { "type": "REMOVE_TECH", "id": string },
-     { "type": "ADD_AVAILABILITY", "slot": { "date": "YYYY-MM-DD", "technicianId": string, "hours": number } },
-     { "type": "REMOVE_AVAILABILITY", "slot": { "date": "YYYY-MM-DD", "technicianId": string } }
+     { "type": "CANCEL_OPS_TASK", "id": string }
   ]
 }
 `;
@@ -122,7 +116,6 @@ Return the JSON per schema.`;
     return { intent: 'MUTATE', answer: parsed.answer, mutations: withCompat as any[] };
   }
   if (parsed.decision === 'SUGGEST') {
-    // Carry an optional policy through; Dashboard will action it.
     return { intent: 'SUGGEST', answer: parsed.answer, ...(parsed.policy ? { policy: parsed.policy } : {}) } as any;
   }
   return { intent: 'QA', answer: parsed.answer ?? content };

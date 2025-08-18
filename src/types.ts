@@ -1,143 +1,127 @@
 // src/types.ts
 
-// ========== Shared enums/unions ==========
-export type AgentKey = 'scheduler' | 'reliability' | 'parts';
-
 export type VehicleStatus = 'AVAILABLE' | 'DUE' | 'DOWN';
-export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
-export type WoType = 'Corrective' | 'Preventive';
+export type Criticality = 'Low' | 'Medium' | 'High';
+export type Priority = 'Low' | 'Medium' | 'High' | 'Critical';
+export type WoType = 'Preventive' | 'Corrective' | 'Inspection' | 'Other';
 export type Skill = 'Mechanic' | 'AutoElec';
 
-// ========== Core domain types ==========
 export type Vehicle = {
   id: string;
-  status: VehicleStatus;
-  image?: string;
   model?: string;
   year?: number;
-  criticality?: 'High' | 'Medium' | 'Low' | number;
+  status: VehicleStatus;
+  criticality?: Criticality;
   odometerKm?: number;
   engineHours?: number;
+  photoUrl?: string;
 };
 
 export type WorkOrder = {
   id: string;
   vehicleId: string;
   title: string;
-  description?: string;
   type: WoType;
   priority: Priority;
   status: 'Open' | 'Scheduled' | 'In Progress' | 'Closed';
   subsystem?: string;
+  requiredSkills?: Skill[];
+  /** Normalized for UI popups */
+  requiredParts?: string[];
+  /** Normalized for UI popups */
+  requiredTools?: string[];
+  technicianId?: string;
+  hours?: number;
   start?: string; // ISO
   end?: string;   // ISO
-  hours?: number;
-  technicianId?: string;
-  requiredSkills?: Skill[];
-  parts?: Array<{ partId: string; qty: number }>;
-  created?: string; // ISO
-  tools?: string[];
+  description?: string;
 };
 
 export type OpsTask = {
-  id: string;
+  id: string; // unique ops id
   vehicleId: string;
   title: string;
   start: string; // ISO
   end: string;   // ISO
-  hours: number;
-};
-
-export type ConditionBand = 'Good' | 'Fair' | 'Poor';
-export type ConditionSnapshot = {
-  vehicleId: string;
-  date: string; // ISO
-  bands: Record<string, ConditionBand>; // subsystem -> band
-};
-
-export type FailureRecord = {
-  vehicleId: string;
-  subsystem: string;
-  failure_mode?: string;
-  date: string; // ISO
-  downtime_hours?: number;
+  demandHours?: number;
 };
 
 export type DemandRecord = {
-  date: string; // ISO
-  vehicleId?: string;
-  hours?: number;
+  date: string; // YYYY-MM-DD
+  hours: number;
 };
 
-export type PMTask = {
+export type FailureRecord = {
   id: string;
-  title: string;
-  subsystem?: string;
-  interval?: string | number; // "500h" | "90d" | 500
-  estimatedHours?: number;
-  requiredSkills?: Skill[];
-  parts?: Array<{ partId: string; qty: number }>;
+  vehicleId: string;
+  subsystem: string;
+  partId?: string;
+  failureMode: string;
+  date: string; // ISO
+  downtimeHours: number;
 };
 
+export type ConditionBand = 'Good' | 'Watch' | 'Poor';
+
+export type ConditionSnapshot = {
+  vehicleId: string;
+  date: string; // YYYY-MM-DD
+  subsystem: string;
+  condition: number;
+  band: ConditionBand;
+  notes?: string;
+};
+
+/** NEW: used by resourceStore and scheduler */
 export type Technician = {
   id: string;
   name: string;
   skills: Skill[];
-  depot?: string;
 };
 
+/** NEW: daily availability blocks (date-local, hours available that day) */
 export type AvailabilitySlot = {
   technicianId: string;
-  date: string; // ISO
-  hours: number;
+  date: string; // YYYY-MM-DD
+  hours: number; // e.g., 8 for full day
 };
 
-// ========== Agent plumbing ==========
-export type SchedulerPolicy = {
-  windows?: Array<{ startHour: number; endHour: number }>;
-  avoidOps?: boolean;
-  weekendsAllowed?: boolean;
-  vehicleScope?: string[];
-  depotScope?: string[];
-  horizonDays?: number;
-  prioritize?: Array<'Corrective' | 'Preventive' | 'Critical' | 'High' | 'Medium' | 'Low'>;
-  splitLongJobs?: boolean;
-  maxChunkHours?: number;
-};
+export type AgentKey = 'scheduler' | 'reliability' | 'parts';
 
-export type ReportQuery = {
-  kind: 'UNSCHEDULED' | 'MOVED' | 'SUMMARY' | 'SCHEDULED_FOR_VEHICLE' | 'DELTA';
-  vehicleId?: string;
-  nBack?: number;
-};
+// Scheduling / agent types (kept loose to avoid churn)
+export type SchedulerPolicy = unknown;
+
+export type ReportQuery =
+  | { kind: 'UNSCHEDULED' }
+  | { kind: 'MOVED' }
+  | { kind: 'DELTA'; nBack?: number }
+  | { kind: 'SCHEDULED_FOR_VEHICLE'; vehicleId: string };
 
 export type QATurn = { role: 'user' | 'assistant'; text: string };
+
+export type AgentDecision = {
+  intent: 'QA' | 'MUTATE' | 'PLAN' | 'UNKNOWN';
+  answer?: string;
+  mutations?: Array<any>;
+};
 
 export type PlanContext = {
   lastAccepted?: {
     when: string;
-    moved: number; scheduled: number; unscheduled: number;
-    movedIds?: string[]; scheduledIds?: string[]; unscheduledIds?: string[];
+    moved: number;
+    scheduled: number;
+    unscheduled: number;
+    movedIds: string[];
+    scheduledIds: string[];
+    unscheduledIds: string[];
   };
   preview?: {
     when: string;
-    moved: number; scheduled: number; unscheduled: number;
-    movedIds?: string[]; scheduledIds?: string[]; unscheduledIds?: string[];
+    moved: number;
+    scheduled: number;
+    unscheduled: number;
+    movedIds: string[];
+    scheduledIds: string[];
+    unscheduledIds: string[];
   };
-};
-
-export type LLMIntent = 'SUGGEST' | 'ACCEPT' | 'REJECT' | 'REPORT' | 'QA' | 'MUTATE';
-
-export type Mutation =
-  | { op: 'ADD_TECH'; id?: string; name?: string; skill: Skill; depot?: string; hoursPerDay?: number }
-  | { op: 'SET_AVAILABILITY'; technicianId: string; date: string; hours: number }
-  | { op: 'MARK_PART_AVAILABLE'; partId: string; qty: number; eta?: string };
-
-export type AgentDecision = {
-  intent: LLMIntent;
-  policy?: SchedulerPolicy;
-  report?: ReportQuery;
-  answer?: string;
-  mutations?: Mutation[];
-  confidence?: number;
 };

@@ -29,7 +29,7 @@ export default function VehicleGallery({
 
   return (
     <div className="space-y-2">
-      <div className="text-slate-100 text-sm font-semibold">Prime Movers</div>
+      <div className="text-slate-100 text-sm font-semibold">Fleet Assets</div>
       <div className="grid grid-cols-2 gap-2">
         {vehicles.map((v) => {
           const active = selectedId === v.id;
@@ -56,7 +56,7 @@ export default function VehicleGallery({
 
               <div className="mt-2 rounded-lg bg-slate-950/40 flex items-center justify-center">
                 <img
-                  src={v.image || fallback}
+                  src={v.photoUrl || fallback}
                   alt={v.id}
                   className="h-16 md:h-20 object-contain p-2"
                   loading="lazy"

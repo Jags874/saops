@@ -1,129 +1,199 @@
 // src/data/adapter.ts
-// Central adapter that merges base JSON with runtime overlays/cancellations.
-// All timestamps we return are local ISO without 'Z' to avoid timezone shifts.
-
 import vehiclesRaw from './fake/vehicles.json';
 import workordersRaw from './fake/workorders.json';
 import opsTasksRaw from './fake/ops_tasks.json';
+// removed: demand.json
 import failuresRaw from './fake/failures.json';
-import pmRaw from './fake/pm.json';
+import conditionRaw from './fake/condition.json';
 
-import {
-  getRuntimeWorkordersOverlay,
-  getRuntimeWOPatches,
-  getRuntimeOpsOverlay,
-  getCancelledOpsIds,
-  getPendingOpsCancelConflicts,
-  addCancelledOps,
-  clearPendingOpsCancelConflicts
-} from './resourceStore';
+import type {
+  Vehicle, WorkOrder, OpsTask, DemandRecord, FailureRecord, ConditionSnapshot, Skill
+} from '../types';
 
-// ----- Static demo anchor -----
-export function getDemoWeekStart() {
-  return '2025-08-22T00:00:00Z';
+// --- static demo week anchor (local midnight) ---
+const WEEK_START = new Date('2025-08-22T00:00:00');
+
+// ---------- helpers ----------
+function toISO(d?: string | null): string | undefined {
+  if (!d) return undefined;
+  const dt = new Date(d);
+  if (isNaN(dt.getTime())) return undefined;
+  return dt.toISOString();
+}
+function hoursDiff(a?: string, b?: string): number | undefined {
+  const s = a ? new Date(a) : undefined;
+  const e = b ? new Date(b) : undefined;
+  if (!s || !e || isNaN(s.getTime()) || isNaN(e.getTime())) return undefined;
+  return Math.max(0, (e.getTime() - s.getTime()) / 36e5);
+}
+function ymdLocal(d: Date) {
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
 }
 
-// ----- Helpers -----
-const isSched = (w: any) => w && w.status === 'Scheduled' && w.start && w.end;
+// Normalize parts/tools regardless of where they appear in JSON
+function normalizeParts(input: any): string[] | undefined {
+  const src =
+    input?.requiredParts ??
+    input?.parts ??
+    input?.required_resources?.parts ??
+    input?.required_resources?.Parts;
 
-function overlaps(aStart?: string, aEnd?: string, bStart?: string, bEnd?: string) {
-  if (!aStart || !aEnd || !bStart || !bEnd) return false;
-  const aS = new Date(aStart.replace('Z','')).getTime();
-  const aE = new Date(aEnd.replace('Z','')).getTime();
-  const bS = new Date(bStart.replace('Z','')).getTime();
-  const bE = new Date(bEnd.replace('Z','')).getTime();
-  return aS < bE && bS < aE;
-}
-
-// ----- Vehicles -----
-export function getVehicles(limit?: number) {
-  const arr = (vehiclesRaw as any[]).map(v => ({ ...v }));
-  return typeof limit === 'number' ? arr.slice(0, limit) : arr;
-}
-
-// ----- Work Orders (merged + patches) -----
-export function getWorkOrders() {
-  // base + overlay
-  const byId = new Map<string, any>();
-  for (const w of (workordersRaw as any[])) byId.set(String(w.id), { ...w });
-  for (const w of getRuntimeWorkordersOverlay()) byId.set(String(w.id), { ...w });
-
-  // apply patches (MOVE/UPDATE/CANCEL recorded against ids)
-  for (const { id, patch } of getRuntimeWOPatches()) {
-    if (byId.has(id)) {
-      const cur = byId.get(id)!;
-      byId.set(id, { ...cur, ...patch });
+  if (!Array.isArray(src) || src.length === 0) return undefined;
+  const out = src.map((p: any) => {
+    if (typeof p === 'string') return p;
+    if (p && typeof p === 'object') {
+      const id = p.partId ?? p.part_id ?? p.id ?? '';
+      const name = p.partName ?? p.part_name ?? p.name ?? '';
+      const qty = p.qty ?? p.quantity ?? '';
+      const label = name || id || 'part';
+      return qty ? `${label} x${qty}` : label;
     }
-  }
+    return String(p);
+  }).filter(Boolean);
+  return out.length ? out : undefined;
+}
+function normalizeTools(input: any): string[] | undefined {
+  const src =
+    input?.requiredTools ??
+    input?.tools ??
+    input?.required_resources?.tools ??
+    input?.required_resources?.Tools;
 
-  const all = Array.from(byId.values());
-  all.sort((a, b) => {
-    const aSched = isSched(a) ? 0 : 1;
-    const bSched = isSched(b) ? 0 : 1;
-    if (aSched !== bSched) return aSched - bSched;
-    const at = a.start ? new Date(a.start.replace('Z','')).getTime() : Infinity;
-    const bt = b.start ? new Date(b.start.replace('Z','')).getTime() : Infinity;
-    return at - bt;
+  if (!Array.isArray(src) || src.length === 0) return undefined;
+  const out = src.map((t: any) => {
+    if (typeof t === 'string') return t;
+    if (t && typeof t === 'object') {
+      return t.name ?? t.tool ?? t.id ?? JSON.stringify(t);
+    }
+    return String(t);
+  }).filter(Boolean);
+  return out.length ? out : undefined;
+}
+
+// ---------- Vehicles ----------
+export function getVehicles(limit?: number): Vehicle[] {
+  const arr: any[] = (vehiclesRaw as unknown as any[]) ?? [];
+  const out = arr.map(v => ({
+    id: String(v.id ?? v.vehicleId ?? v.code ?? ''),
+    model: v.model ?? 'Prime Mover',
+    year: Number(v.year ?? 2021),
+    status: (v.status ?? 'AVAILABLE') as Vehicle['status'],
+    criticality: (v.criticality ?? 'Low') as Vehicle['criticality'],
+    odometerKm: Number(v.odometerKm ?? v.odometer ?? 0),
+    engineHours: Number(v.engineHours ?? v.hours ?? 0),
+    photoUrl: v.photoUrl ?? '/assets/prime-mover.png',
+  })) as Vehicle[];
+  return typeof limit === 'number' ? out.slice(0, limit) : out;
+}
+
+// ---------- Work Orders ----------
+export function getWorkOrders(): WorkOrder[] {
+  const src: any[] = (workordersRaw as unknown as any[]) ?? [];
+  return src.map(w => {
+    const startRaw = w.start ?? w.scheduled_start ?? w.scheduledStart ?? null;
+    const endRaw   = w.end   ?? w.scheduled_end   ?? w.scheduledEnd   ?? null;
+
+    const startISO = toISO(startRaw);
+    const endISO   = toISO(endRaw);
+
+    const hours =
+      typeof w.hours === 'number'
+        ? w.hours
+        : hoursDiff(startISO, endISO);
+
+    const requiredSkills: Skill[] | undefined =
+      Array.isArray(w.requiredSkills) ? w.requiredSkills as Skill[] :
+      (w.subsystem === 'electrical' ? (['AutoElec'] as Skill[]) : (['Mechanic'] as Skill[]));
+
+    return {
+      id: String(w.id ?? w.work_order_id ?? w.woId ?? ''),
+      vehicleId: String(w.vehicleId ?? w.asset_id ?? w.assetId ?? ''),
+      title: String(w.title ?? w.description ?? 'Maintenance Task'),
+      type: (w.type ?? w.wo_type ?? 'Corrective') as WorkOrder['type'],
+      priority: (w.priority ?? 'Medium') as WorkOrder['priority'],
+      status: (w.status ?? 'Open') as WorkOrder['status'],
+      subsystem: w.subsystem ?? w.system ?? undefined,
+      requiredSkills,
+      requiredParts: normalizeParts(w),
+      requiredTools: normalizeTools(w),
+      technicianId: w.technicianId ?? w.assigned_to ?? undefined,
+      hours,
+      start: startISO,
+      end: endISO,
+      description: w.notes ?? w.long_description ?? w.description ?? undefined,
+    } as WorkOrder;
   });
-  return all;
 }
 
-// ----- Ops tasks (merged + cancellations) -----
-export function getOpsTasks(_horizonDays: number) {
-  // base
-  const byId = new Map<string, any>();
-  for (const t of (opsTasksRaw as any[])) byId.set(String(t.id).toUpperCase(), { ...t });
-
-  // overlay (MERGE onto base so we can move-by-id without having a full overlay object)
-  for (const ov of getRuntimeOpsOverlay()) {
-    const id = String(ov.id).toUpperCase();
-    const base = byId.get(id) ?? {};
-    byId.set(id, { ...base, ...ov });
-  }
-
-  // explicit cancels
-  const cancelled = getCancelledOpsIds();
-  let tasks = Array.from(byId.values()).filter(t => !cancelled.has(String(t.id).toUpperCase()));
-
-  // resolve pending "conflictsWith: WO-..." against current merged WOs
-  const pending = getPendingOpsCancelConflicts();
-  if (pending.length) {
-    const wos = getWorkOrders();
-    const toCancel: string[] = [];
-    for (const woId of pending) {
-      const w = wos.find(x => String(x.id).toUpperCase() === String(woId).toUpperCase());
-      if (!w || !w.start || !w.end) continue;
-      const hit = tasks.find(t =>
-        String(t.vehicleId) === String(w.vehicleId) &&
-        overlaps(w.start, w.end, t.start, t.end)
-      );
-      if (hit) toCancel.push(String(hit.id).toUpperCase());
-    }
-    if (toCancel.length) {
-      addCancelledOps(toCancel);
-      tasks = tasks.filter(t => !toCancel.includes(String(t.id).toUpperCase()));
-    }
-    clearPendingOpsCancelConflicts();
-  }
-
-  return tasks;
+// ---------- Ops Tasks ----------
+export function getOpsTasks(_days = 7): OpsTask[] {
+  const src: any[] = (opsTasksRaw as unknown as any[]) ?? [];
+  return src.map((t, i) => {
+    const sISO = toISO(t.start ?? t.scheduled_start ?? t.scheduledStart ?? '');
+    const eISO = toISO(t.end ?? t.scheduled_end   ?? t.scheduledEnd   ?? '');
+    return {
+      id: String(t.id ?? t.opsId ?? `OPS-${i + 1}`),
+      vehicleId: String(t.vehicleId ?? t.asset_id ?? ''),
+      title: String(t.title ?? 'Transport Task'),
+      start: sISO ?? new Date('2025-08-22T00:00:00').toISOString(),
+      end:   eISO ?? new Date('2025-08-22T01:00:00').toISOString(),
+      demandHours: Number(t.hours ?? t.demandHours ?? hoursDiff(sISO, eISO) ?? 0),
+    } as OpsTask;
+  });
 }
 
-// ----- PM & Failures -----
-export function getPMTasks() { return (pmRaw as any[]).map(x => ({ ...x })); }
-export function getFailures() { return (failuresRaw as any[]).map(x => ({ ...x })); }
-
-// ----- Demand history (derived from ops tasks) -----
-export function getDemandHistory(horizonDays: number) {
-  const tasks = getOpsTasks(horizonDays);
+// ---------- Demand (derived from ops tasks; attributed to the task start date) ----------
+export function getDemandHistory(horizonDays = 7): DemandRecord[] {
+  const start = new Date(WEEK_START);
   const byDay = new Map<string, number>();
-  for (const t of tasks) {
-    if (!t.start || !t.end) continue;
-    const start = new Date(t.start.replace('Z',''));
-    const end = new Date(t.end.replace('Z',''));
-    const hrs = Math.max(0, (end.getTime() - start.getTime()) / 36e5);
-    const ymd = t.start.slice(0, 10);
-    byDay.set(ymd, (byDay.get(ymd) ?? 0) + hrs);
+  for (let i = 0; i < horizonDays; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    byDay.set(ymdLocal(d), 0);
   }
-  return Array.from(byDay.entries()).sort(([a],[b]) => a.localeCompare(b)).map(([date, hours]) => ({ date, hours }));
+
+  const ops: any[] = (opsTasksRaw as unknown as any[]) ?? [];
+  for (const t of ops) {
+    const sISO = toISO(t.start ?? t.scheduled_start ?? t.scheduledStart ?? '');
+    const eISO = toISO(t.end   ?? t.scheduled_end   ?? t.scheduledEnd   ?? '');
+    if (!sISO || !eISO) continue;
+    const day = ymdLocal(new Date(sISO));
+    if (!byDay.has(day)) continue; // ignore tasks outside the horizon
+    const hours = Number(t.hours ?? t.demandHours ?? hoursDiff(sISO, eISO) ?? 0);
+    byDay.set(day, (byDay.get(day) ?? 0) + hours);
+  }
+
+  return Array.from(byDay.entries()).map(([date, hours]) => ({ date, hours }));
+}
+
+// ---------- Failures ----------
+export function getFailures(): FailureRecord[] {
+  const src: any[] = (failuresRaw as unknown as any[]) ?? [];
+  return src.map(f => ({
+    id: String(f.id ?? f.failure_id ?? ''),
+    vehicleId: String(f.vehicleId ?? f.asset_id ?? ''),
+    subsystem: String(f.subsystem ?? f.system ?? 'engine'),
+    partId: f.partId ?? f.part_id ?? undefined,
+    failureMode: String(f.failureMode ?? f.failure_mode ?? 'unknown'),
+    date: toISO(f.date ?? f.failure_date ?? new Date().toISOString())!,
+    downtimeHours: Number(f.downtimeHours ?? f.downtime_hours ?? 0),
+  })) as FailureRecord[];
+}
+
+// ---------- Condition ----------
+export function getCondition(): ConditionSnapshot[] {
+  const src: any[] = (conditionRaw as unknown as any[]) ?? [];
+  return src.map(c => {
+    const score = Number(c.condition ?? c.score ?? 80);
+    const band = (c.band ??
+      (score >= 80 ? 'Good' : score >= 60 ? 'Watch' : 'Poor')) as 'Good' | 'Watch' | 'Poor';
+    return {
+      vehicleId: String(c.vehicleId ?? c.asset_id ?? ''),
+      date: String(c.date ?? '').slice(0, 10),
+      subsystem: String(c.subsystem ?? 'engine'),
+      condition: score,
+      band,
+      notes: c.notes ?? undefined,
+    };
+  }) as ConditionSnapshot[];
 }
