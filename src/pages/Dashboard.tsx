@@ -9,15 +9,14 @@ import Agents from '../components/Agents';
 import type { AgentKey, SchedulerPolicy, ReportQuery, QATurn, AgentDecision, PlanContext } from '../types';
 import ResourceSummary from '../components/ResourceSummary';
 import DemandSummary from '../components/DemandSummary';
-import { proposeSchedule } from '../agents/scheduler';
+import { proposeSchedule, rebalanceOpsForMaintenance } from '../agents/scheduler';
 import AgentConsole from '../components/AgentConsole';
 import { analyzeWithLLM, helloSchedulerFact } from '../agents/agentRuntime';
 import { buildKnowledgePack } from '../agents/context';
 import { buildReliabilityPack, analyzeReliabilityWithLLM, helloReliabilityFact } from '../agents/reliability';
 import { buildPartsPack, analyzePartsWithLLM } from '../agents/parts';
-import { reseedGenericTechnicians, applyMutations, getResourceSnapshot } from '../data/resourceStore';
+import { reseedGenericTechnicians, applyMutations } from '../data/resourceStore';
 import DemoFooter from '../components/DemoFooter';
-
 
 type StatusFilter = 'ALL' | 'AVAILABLE' | 'DUE' | 'DOWN';
 
@@ -35,32 +34,32 @@ type PlanSnapshot = {
 };
 
 export default function Dashboard() {
-  // Seed simplified tech model once (Mechanic/AutoElec, smaller team)
   useEffect(() => { reseedGenericTechnicians(); }, []);
 
-  // Base data
-  const vehicles = useMemo(() => getVehicles(), []);
+  const vehicles = useMemo(() => getVehicles(20), []);
   const [workorders, setWorkorders] = useState(() => getWorkOrders());
-  const opsTasks = useMemo(() => getOpsTasks(7), []);
+
+  // Ops tasks refresh tick
+  const [opsVersion, setOpsVersion] = useState(0);
+  const opsTasksMemo = useMemo(() => getOpsTasks(7), [opsVersion, workorders]);
 
   // UI state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
-
   const [woOpen, setWoOpen] = useState(false);
   const [modalIgnoreVehicle, setModalIgnoreVehicle] = useState(false);
   const [focusedWorkOrderId, setFocusedWorkOrderId] = useState<string | null>(null);
 
   // Planning state
   const [preview, setPreview] = useState<PlanSnapshot | null>(null);
-  const [planHistory, setPlanHistory] = useState<PlanSnapshot[]>([]); // keep last ~6
+  const [planHistory, setPlanHistory] = useState<PlanSnapshot[]>([]);
 
-  // Active agent + hello injection
+  // Agent state
   const [activeAgent, setActiveAgent] = useState<AgentKey>('scheduler');
   const [helloMessage, setHelloMessage] = useState<string | undefined>(undefined);
   const [helloNonce, setHelloNonce] = useState<number>(0);
 
-  // Derived KPIs
+  // KPIs
   const outstanding = useMemo(
     () => workorders.filter(w => w.status === 'Open' || w.status === 'Scheduled' || w.status === 'In Progress'),
     [workorders]
@@ -86,9 +85,9 @@ export default function Dashboard() {
   }, [baseWorkorders, visibleVehicleIds, selectedVehicleId]);
 
   const visibleOpsTasks = useMemo(() => {
-    const base = opsTasks.filter(t => visibleVehicleIds.has(t.vehicleId));
+    const base = opsTasksMemo.filter(t => visibleVehicleIds.has(t.vehicleId));
     return selectedVehicleId ? base.filter(t => t.vehicleId === selectedVehicleId) : base;
-  }, [opsTasks, visibleVehicleIds, selectedVehicleId]);
+  }, [opsTasksMemo, visibleVehicleIds, selectedVehicleId]);
 
   const outstandingForModal = useMemo(() => {
     const source = baseWorkorders;
@@ -119,10 +118,10 @@ export default function Dashboard() {
   );
 
   // ====== Agent hooks ======
-
   const agentDecide = async (text: string, history: QATurn[]): Promise<AgentDecision> => {
+    const baseWos = preview ? preview.workorders : workorders;
+
     if (activeAgent === 'scheduler') {
-      const baseWos = preview ? preview.workorders : workorders;
       const pack = buildKnowledgePack({ horizonDays: 7, baseWorkorders: baseWos });
       const planCtx: PlanContext = {
         lastAccepted: planHistory.at(-1) ? {
@@ -161,7 +160,8 @@ export default function Dashboard() {
   };
 
   const agentSuggest = async (policy?: SchedulerPolicy) => {
-    const res = proposeSchedule(workorders, opsTasks, policy);
+    const opsNow = getOpsTasks(7); // fresh
+    const res = proposeSchedule(workorders, opsNow, policy as any);
     const snap: PlanSnapshot = {
       workorders: res.workorders,
       summary: res.rationale,
@@ -176,6 +176,7 @@ export default function Dashboard() {
     };
     setPreview(snap);
     setSelectedVehicleId(null);
+    setOpsVersion(v => v + 1); // reflect ops changes too
     return { moved: res.moved, scheduled: res.scheduled, unscheduled: res.unscheduled, notes: res.rationale };
   };
 
@@ -185,6 +186,7 @@ export default function Dashboard() {
     const accepted: PlanSnapshot = { ...preview, status: 'accepted', when: new Date().toISOString() };
     setPlanHistory(prev => [...prev.slice(-5), accepted]);
     setPreview(null);
+    setOpsVersion(v => v + 1);
   };
 
   const agentReject = () => { setPreview(null); };
@@ -299,7 +301,7 @@ export default function Dashboard() {
     return `Summary (current state): ~${sched} scheduled, ~${uns} unscheduled.`;
   };
 
-  // Handle hello buttons on cards
+  // Hello buttons
   const helloFromCard = (agent: AgentKey) => {
     setActiveAgent(agent);
     const msg =
@@ -316,18 +318,16 @@ export default function Dashboard() {
                                      'Parts Interpreter';
 
   // Apply MUTATE instructions coming from the Scheduler Agent
-// inside Dashboard.tsx
   const handleDecisionSideEffects = (d: AgentDecision) => {
-    if (d.intent === 'MUTATE' && Array.isArray(d.mutations) && d.mutations.length) {
-      // Cast to the resource mutation shape; unknown items are ignored inside applyMutations
-      const notes = applyMutations(d.mutations as any[]);
-      // Re-run a quick proposal so the UI reflects new capacity/parts
-      agentSuggest(undefined);
+    if (d.intent === 'MUTATE' && (d as any).mutations?.length) {
+      const notes = applyMutations((d as any).mutations);
+      // Refresh state to reflect targeted edits immediately
+      setWorkorders(getWorkOrders());
+      setOpsVersion(v => v + 1);
       return (d.answer ? d.answer + '\n' : '') + `Applied changes:\n- ${notes.join('\n- ')}`;
     }
     return d.answer ?? undefined;
   };
-
 
   return (
     <div className="p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:[grid-template-columns:1fr_18rem] gap-6">
@@ -364,7 +364,32 @@ export default function Dashboard() {
           onReport={agentReport}
           onDecide={async (text, history) => {
             const decision = await agentDecide(text, history);
-            // If scheduler asked to mutate resources/parts, apply them here:
+
+            // NEW: If the model asks to re-balance (SUGGEST + policy), move ops first, then propose a business-hours plan.
+            if (decision.intent === 'SUGGEST') {
+              const pol = (decision as any).policy || {};
+              if (pol && pol.opsFlexDays) {
+                const baseWos = preview ? preview.workorders : workorders;
+                const opsNow = getOpsTasks(7);
+                const opsMoves = rebalanceOpsForMaintenance(baseWos, opsNow, pol);
+                if (opsMoves.length) {
+                  applyMutations(opsMoves as any);
+                  setOpsVersion(v => v + 1);
+                }
+              }
+              const schedPol = (decision as any).policy?.forceBusinessHours
+                ? { businessHours: (decision as any).policy?.businessHours ?? [9, 17] }
+                : undefined;
+              const s = await agentSuggest(schedPol as any);
+              return {
+                intent: 'QA',
+                answer: decision?.answer
+                  ? `${decision.answer}\nProposed schedule ready — moved ${s.moved}, scheduled ${s.scheduled}, unscheduled ${s.unscheduled}.`
+                  : `Proposed schedule ready — moved ${s.moved}, scheduled ${s.scheduled}, unscheduled ${s.unscheduled}.`
+              };
+            }
+
+            // Otherwise handle MUTATE/QA as before
             const maybeMsg = handleDecisionSideEffects(decision);
             return maybeMsg ? { ...decision, intent: decision.intent === 'MUTATE' ? 'QA' : decision.intent, answer: maybeMsg } : decision;
           }}
@@ -436,7 +461,7 @@ export default function Dashboard() {
         onClose={() => { setWoOpen(false); setModalIgnoreVehicle(false); setFocusedWorkOrderId(null); }}
         workorders={outstandingForModal}
       />
-      <DemoFooter />    
+      <DemoFooter />
     </div>
   );
 }
