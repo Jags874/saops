@@ -1,253 +1,355 @@
 // src/data/mutatePlan.ts
-import { WEEK_START } from './adapter';
-import type { WorkOrder, OpsTask, Priority, Skill } from '../types';
-import { applyMutations as applyResourceMutations } from './resourceStore';
+import type { WorkOrder, OpsTask, Skill } from '../types';
 
-// Loose mutation shape from the agent
-export type PlanMutation = { op: string; [k: string]: any };
+/* ===================== config & utils ===================== */
 
-/* ================= helpers ================= */
+const ANCHOR_YEAR = 2025; // keep all user-entered dates anchored to 2025
 
-function clone<T>(x: T): T { return JSON.parse(JSON.stringify(x)); }
+const clampMin = (n: number, min: number) => (Number.isFinite(n) ? Math.max(n, min) : min);
+
+function cloneArr<T>(arr: T[]): T[] {
+  return arr.map(x => ({ ...(x as any) }));
+}
 
 function toLocalISO(d: Date): string {
-  // store as local-ISO so rendered wall-clock matches intent
-  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
+  // local-ISO (no trailing 'Z') so the Gantt shows wall-clock time reliably
+  const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return t.toISOString().replace('Z', '');
 }
 
-function addHours(date: Date, h: number): Date {
-  const d = new Date(date); d.setHours(d.getHours() + h); return d;
+function addHours(d: Date, h: number): Date {
+  return new Date(d.getTime() + h * 3_600_000);
 }
 
-function durationHours(start?: string, end?: string, fallback = 2): number {
-  if (!start || !end) return fallback;
-  const s = new Date(start), e = new Date(end);
-  if (isNaN(+s) || isNaN(+e)) return fallback;
-  return Math.max(0.25, (e.getTime() - s.getTime()) / 36e5);
+function parseISO(maybe?: string): Date | null {
+  if (!maybe) return null;
+  const d = new Date(maybe);
+  return Number.isFinite(+d) ? d : null;
 }
 
-function overlaps(aS: Date, aE: Date, bS: Date, bE: Date): boolean {
-  return aS < bE && bS < aE;
+function durationHoursFrom(a?: string, b?: string, fallback?: number): number {
+  const A = a ? new Date(a) : null;
+  const B = b ? new Date(b) : null;
+  if (A && B && Number.isFinite(+A) && Number.isFinite(+B)) {
+    const ms = +B - +A;
+    return clampMin(ms / 3_600_000, 0.25);
+  }
+  return clampMin(fallback ?? 1, 0.25);
 }
 
-function businessWindow(dayStart: Date, hours: [number, number] = [8, 17]): [Date, Date] {
-  const [h1, h2] = hours;
-  const s = new Date(dayStart); s.setHours(h1, 0, 0, 0);
-  const e = new Date(dayStart); e.setHours(h2, 0, 0, 0);
-  return [s, e];
+function snapYear(d: Date | null): Date | null {
+  if (!d) return d;
+  if (d.getFullYear() !== ANCHOR_YEAR) {
+    const nd = new Date(d);
+    nd.setFullYear(ANCHOR_YEAR);
+    return nd;
+  }
+  return d;
 }
 
 function nextWoId(existing: WorkOrder[]): string {
-  let max = 0;
-  for (const w of existing) {
-    const m = /^WO-(\d+)$/.exec(w.id);
-    if (m) max = Math.max(max, parseInt(m[1], 10));
-  }
-  return `WO-${String(max + 1).padStart(3, '0')}`;
+  const nums = existing
+    .map(w => w.id.match(/WO-(\d+)/)?.[1])
+    .filter(Boolean)
+    .map(n => parseInt(n as string, 10));
+  const next = nums.length ? Math.max(...nums) + 1 : 1;
+  return `WO-${String(next).padStart(3, '0')}`;
 }
 
-/** earliest slot within WEEK_START..+7d that avoids OPS/WO conflicts and fits business hours */
-function findEarliestSlot(
-  vehicleId: string,
-  hoursNeeded: number,
-  workorders: WorkOrder[],
-  opsTasks: OpsTask[],
-  businessHours: [number, number] = [8, 17]
-): { start: string; end: string } {
-  const day0 = new Date(WEEK_START);
-  for (let d = 0; d < 7; d++) {
-    const dayStart = new Date(day0);
-    dayStart.setDate(day0.getDate() + d);
-    const [winS, winE] = businessWindow(dayStart, businessHours);
-
-    const blocks: Array<[Date, Date]> = [];
-    for (const t of opsTasks) {
-      if (t.vehicleId !== vehicleId) continue;
-      const s = new Date(t.start), e = new Date(t.end);
-      if (!(isNaN(+s) || isNaN(+e))) blocks.push([s, e]);
-    }
-    for (const w of workorders) {
-      if (w.vehicleId !== vehicleId) continue;
-      if (w.status === 'Closed' || !w.start || !w.end) continue;
-      const s = new Date(w.start), e = new Date(w.end);
-      if (!(isNaN(+s) || isNaN(+e))) blocks.push([s, e]);
-    }
-    blocks.sort((a, b) => a[0].getTime() - b[0].getTime());
-
-    let cursor = new Date(winS);
-    const neededMs = hoursNeeded * 36e5;
-
-    for (let i = 0; i <= blocks.length; i++) {
-      const nextS = i < blocks.length ? blocks[i][0] : winE;
-      const gapMs = nextS.getTime() - cursor.getTime();
-      if (gapMs >= neededMs && cursor >= winS && addHours(cursor, hoursNeeded) <= winE) {
-        const startISO = toLocalISO(cursor);
-        const endISO = toLocalISO(addHours(cursor, hoursNeeded));
-        return { start: startISO, end: endISO };
-      }
-      if (i < blocks.length) {
-        const nextE = blocks[i][1];
-        cursor = new Date(Math.max(cursor.getTime(), nextE.getTime()));
-      }
-    }
-  }
-  const s = new Date(WEEK_START); s.setHours(9, 0, 0, 0);
-  return { start: toLocalISO(s), end: toLocalISO(addHours(s, hoursNeeded)) };
+// Local ISO without trailing 'Z' (writes wall‑clock times safely for the Gantt)
+function isoLocal(d: Date): string {
+  const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return t.toISOString().replace('Z', '');
 }
 
-/* ================= main ================= */
+
+const SKILL_ALIASES: Record<string, Skill> = {
+  mechanic: 'Mechanical' as Skill,
+  mechanical: 'Mechanical' as Skill,
+  electrician: 'Electrical' as Skill,
+  electrical: 'Electrical' as Skill,
+  hydraulics: 'Hydraulic' as Skill,
+  hydraulic: 'Hydraulic' as Skill,
+  body: 'Body' as Skill,
+  panel: 'Body' as Skill,
+  tyre: 'Tyre' as Skill,
+  tires: 'Tyre' as Skill,
+  diagnostics: 'Diagnostics' as Skill,
+  diagnostic: 'Diagnostics' as Skill,
+};
+
+function normalizeSkillLabel(label: unknown): Skill | null {
+  const raw = String(label ?? '').trim().toLowerCase();
+  if (!raw) return null;
+  if (SKILL_ALIASES[raw]) return SKILL_ALIASES[raw];
+  const tcase = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  return (tcase as unknown) as Skill;
+}
+
+// Map strings the LLM/user might say → your Skill union
+function normalizeSkill(s: unknown): Skill | null {
+  const raw = String(s ?? '').trim().toLowerCase();
+  if (!raw) return null;
+  switch (raw) {
+    case 'mechanic':
+    case 'mechanical':  return 'Mechanical' as Skill;
+    case 'electrician':
+    case 'electrical':  return 'Electrical' as Skill;
+    case 'hydraulic':
+    case 'hydraulics':  return 'Hydraulic'  as Skill;
+    case 'body':
+    case 'panel':       return 'Body'       as Skill;
+    case 'tyre':
+    case 'tire':
+    case 'tires':       return 'Tyre'       as Skill;
+    case 'diagnostic':
+    case 'diagnostics': return 'Diagnostics' as Skill;
+    default:
+      // Title‑case fallback (helps if your Skill union already matches)
+      const t = raw.charAt(0).toUpperCase() + raw.slice(1);
+      return t as unknown as Skill;
+  }
+}
+
+// Keep priority strictly in your Priority union
+function normalizePriority(p: unknown): WorkOrder['priority'] {
+  const raw = String(p ?? '').toLowerCase();
+  if (raw === 'low' || raw === 'medium' || raw === 'high') {
+    return (raw.charAt(0).toUpperCase() + raw.slice(1)) as WorkOrder['priority'];
+  }
+  return 'Medium';
+}
+
+// Heuristic: guess WoType from the title; fallback to a safe default
+function inferWoType(title: unknown): WorkOrder['type'] {
+  const t = String(title ?? '').toLowerCase();
+  if (t.includes('inspect')) return 'Inspection' as WorkOrder['type'];
+  if (t.includes('service') || t.includes('maint')) return 'Preventive' as WorkOrder['type'];
+  if (t.includes('repair') || t.includes('fault'))  return 'Corrective' as WorkOrder['type'];
+  // If your WoType union includes 'Maintenance' use that; otherwise pick one you have:
+  return 'Preventive' as WorkOrder['type'];
+}
+
+
+/* ===================== mutation contracts ===================== */
+
+export type MoveWo   = { type: 'MOVE_WO';   id: string; start?: string; end?: string; hours?: number; demandHours?: number };
+export type CancelWo = { type: 'CANCEL_WO'; id: string };
+
+export type MoveOps   = { type: 'MOVE_OPS';   id: string; start?: string; end?: string; hours?: number; demandHours?: number };
+export type CancelOps = { type: 'CANCEL_OPS'; id: string };
+
+export type AddWo = {
+  type: 'ADD_WO';
+  vehicleId: string;
+  title: string;
+  hours?: number;
+  demandHours?: number;        // tolerated for back-compat
+  requiredSkills?: string[] | Skill[];
+  priority?: WorkOrder['priority'];
+  start?: string;
+};
+
+export type Mutation = MoveWo | CancelWo | MoveOps | CancelOps | AddWo;
+
+export type ApplyResult = {
+  workorders: WorkOrder[];
+  opsTasks: OpsTask[];
+  notes: string[];
+};
+
+/* ============== OPS id normalization (accept multiple styles) ============== */
+
+function buildOpsIndex(opsTasks: OpsTask[]) {
+  const idx = new Map<string, number>();
+  opsTasks.forEach((t, i) => {
+    const id = String((t as any).id ?? '').toUpperCase();
+    idx.set(id, i);
+
+    const num = id.match(/(\d+)/)?.[1];
+    const veh = String((t as any).vehicleId ?? '').toUpperCase();
+
+    if (num) {
+      idx.set(`OPS-${num}`, i);
+      idx.set(`OP-${num}`, i);
+      if (veh) {
+        idx.set(`OPS-${veh}-${num}`, i);
+        idx.set(`OP-${veh}-${num}`, i);
+      }
+    }
+  });
+  return idx;
+}
+
+function resolveOpsIndex(map: Map<string, number>, raw: string): number {
+  const key = raw.toUpperCase();
+  if (map.has(key)) return map.get(key)!;
+  const num = key.match(/(\d+)/)?.[1];
+  if (num && map.has(`OPS-${num}`)) return map.get(`OPS-${num}`)!;
+  if (num && map.has(`OP-${num}`))  return map.get(`OP-${num}`)!;
+  return -1;
+}
+
+/* ===================== main apply function ===================== */
 
 export function applyMutationsToPlan(
   workordersIn: WorkOrder[],
   opsTasksIn: OpsTask[],
-  mutations: PlanMutation[],
-  opts?: { businessHours?: [number, number] }
-): { workorders: WorkOrder[]; opsTasks: OpsTask[]; notes: string[] } {
+  mutationsIn: Mutation[] | any[],
+  _policy?: { businessHours?: [number, number] }
+): ApplyResult {
+  const workorders = cloneArr(workordersIn);
+  const opsTasks   = cloneArr(opsTasksIn);
   const notes: string[] = [];
-  const businessHours: [number, number] = opts?.businessHours ?? [8, 17];
 
-  const workorders = clone(workordersIn);
-  const opsTasks = clone(opsTasksIn);
+  // accept both `op` or `type`, and `demandHours` as alias of `hours`
+  const mutations: Array<Mutation & { op?: string }> = (mutationsIn ?? []).map((m: any) => {
+    const type = m.type ?? m.op; // accept `op`
+    const hours = m.hours ?? m.demandHours;
+    return { ...m, type, hours };
+  });
 
-  const woById = new Map(workorders.map(w => [w.id, w]));
-  const opsById = new Map(opsTasks.map(o => [o.id, o]));
+  const woById = new Map(workorders.map(w => [String(w.id).toUpperCase(), w]));
+  const opsIdx = buildOpsIndex(opsTasks);
 
   for (const m of mutations) {
-    const op = String(m.op || '').toUpperCase();
+    /* ------------ MOVE_WO ------------ */
+    if (m.type === 'MOVE_WO') {
+      const w = woById.get(String((m as any).id).toUpperCase());
+      if (!w) { notes.push(`MOVE_WO: ${(m as any).id} not found`); continue; }
 
-    /* ----- Work Orders ----- */
-    if (op === 'MOVE_WO') {
-      const id = m.id as string;
-      const w = woById.get(id);
-      if (!w) { notes.push(`MOVE_WO: ${id} not found`); continue; }
+      let startD = snapYear(parseISO(m.start ?? (w.start as any)));
+      let endD   = snapYear(parseISO(m.end   ?? (w.end   as any)));
 
-      const h = typeof m.hours === 'number' ? m.hours : durationHours(w.start, w.end, w.hours ?? 2);
-      let newStart: Date; let newEnd: Date;
+      const demand = clampMin(
+        m.hours ?? (w as any).hours ?? durationHoursFrom(w.start as any, w.end as any, 2),
+        0.25
+      );
 
-      if (m.start) {
-        newStart = new Date(m.start);
-        if (isNaN(+newStart)) { notes.push(`MOVE_WO: invalid start for ${id}`); continue; }
-        newEnd = m.end ? new Date(m.end) : addHours(newStart, h);
-      } else if (m.end) {
-        newEnd = new Date(m.end);
-        if (isNaN(+newEnd)) { notes.push(`MOVE_WO: invalid end for ${id}`); continue; }
-        newStart = addHours(newEnd, -h);
-      } else { notes.push(`MOVE_WO: ${id} requires start or end`); continue; }
+      if (!startD && !endD) { notes.push(`MOVE_WO: ${(m as any).id} needs start or end`); continue; }
+      if (startD && !endD) endD = addHours(startD, demand);
+      if (!startD && endD) startD = addHours(endD, -demand);
 
-      w.start = toLocalISO(newStart);
-      w.end = toLocalISO(newEnd);
-      w.status = 'Scheduled';
-      w.hours = h;
-      notes.push(`Moved ${id} → ${new Date(w.start).toLocaleString()} (${h}h)`);
+      if (startD) w.start = toLocalISO(startD);
+      if (endD)   w.end   = toLocalISO(endD);
+      (w as any).status = 'Scheduled';
+      (w as any).hours  = demand;
+
+      notes.push(`Moved ${w.id} — ${new Date(w.start as any).toLocaleString()} (${demand}h)`);
       continue;
     }
 
-    if (op === 'CANCEL_WO') {
-      const id = m.id as string;
-      const w = woById.get(id);
-      if (!w) { notes.push(`CANCEL_WO: ${id} not found`); continue; }
-      w.status = 'Closed';
-      delete w.start; delete w.end;
-      notes.push(`Cancelled ${id}`);
+    /* ------------ CANCEL_WO ------------ */
+    if (m.type === 'CANCEL_WO') {
+      const w = woById.get(String((m as any).id).toUpperCase());
+      if (!w) { notes.push(`CANCEL_WO: ${(m as any).id} not found`); continue; }
+      (w as any).status = 'Cancelled';
+      (w as any).start  = undefined;
+      (w as any).end    = undefined;
+      notes.push(`Cancelled ${w.id}`);
       continue;
     }
 
-    if (op === 'ADD_WO') {
-      const vehicleId = String(m.vehicleId || '');
-      const title = String(m.title || '');
-      const hours = Number(m.hours || 2);
-      const priority = (m.priority ?? 'Medium') as Priority;
-      const skillSingle = m.skill as Skill | undefined;
-      const skills = (Array.isArray(m.requiredSkills) ? m.requiredSkills as Skill[] :
-                      skillSingle ? [skillSingle] : undefined);
+    /* ------------ MOVE_OPS ------------ */
+    if (m.type === 'MOVE_OPS') {
+      const idx = resolveOpsIndex(opsIdx, String((m as any).id));
+      if (idx < 0) { notes.push(`MOVE_OPS: ${(m as any).id} not found`); continue; }
 
-      if (!vehicleId || !title || !hours) { notes.push(`ADD_WO: missing vehicleId/title/hours`); continue; }
+      const t = opsTasks[idx];
 
-      const id = nextWoId(workorders);
-      const base: WorkOrder = {
-        id, vehicleId, title,
-        type: 'Corrective',
-        priority,
-        status: 'Scheduled',
-        start: '', end: '',
-        hours
-      };
-      if (skills) base.requiredSkills = skills;
+      let startD = snapYear(parseISO(m.start ?? (t.start as any)));
+      let endD   = snapYear(parseISO(m.end   ?? (t.end   as any)));
 
-      let startISO: string, endISO: string;
-      if (m.start) {
-        const s = new Date(String(m.start));
-        if (isNaN(+s)) {
-          notes.push(`ADD_WO: invalid start "${m.start}" — will auto-place`);
-          const slot = findEarliestSlot(vehicleId, hours, workorders, opsTasks, businessHours);
-          startISO = slot.start; endISO = slot.end;
-        } else {
-          startISO = toLocalISO(s); endISO = toLocalISO(addHours(s, hours));
-        }
-      } else {
-        const slot = findEarliestSlot(vehicleId, hours, workorders, opsTasks, businessHours);
-        startISO = slot.start; endISO = slot.end;
-      }
+      const demand = clampMin(
+        m.hours ?? (t as any).hours ?? durationHoursFrom(t.start as any, t.end as any, 4),
+        0.25
+      );
 
-      base.start = startISO;
-      base.end = endISO;
-      workorders.push(base);
-      woById.set(id, base);
-      notes.push(`Added ${id} for ${vehicleId} → ${new Date(base.start).toLocaleString()} (${hours}h)`);
+      if (!startD && !endD) { notes.push(`MOVE_OPS: ${(m as any).id} needs start or end`); continue; }
+      if (startD && !endD) endD = addHours(startD, demand);
+      if (!startD && endD) startD = addHours(endD, -demand);
+
+      if (startD) t.start = toLocalISO(startD);
+      if (endD)   t.end   = toLocalISO(endD);
+      (t as any).hours = demand;
+
+      notes.push(`Moved ${t.id} — ${new Date(t.start as any).toLocaleString()} (${demand}h)`);
       continue;
     }
 
-    /* ----- Ops Tasks ----- */
-    if (op === 'MOVE_OPS') {
-      const id = m.id as string;
-      const t = opsById.get(id);
-      if (!t) { notes.push(`MOVE_OPS: ${id} not found`); continue; }
-
-      const h = typeof m.hours === 'number' ? m.hours : durationHours(t.start, t.end, t.demandHours ?? 8);
-      let newStart: Date; let newEnd: Date;
-
-      if (m.start) {
-        newStart = new Date(m.start);
-        if (isNaN(+newStart)) { notes.push(`MOVE_OPS: invalid start for ${id}`); continue; }
-        newEnd = m.end ? new Date(m.end) : addHours(newStart, h);
-      } else if (m.end) {
-        newEnd = new Date(m.end);
-        if (isNaN(+newEnd)) { notes.push(`MOVE_OPS: invalid end for ${id}`); continue; }
-        newStart = addHours(newEnd, -h);
-      } else { notes.push(`MOVE_OPS: ${id} requires start or end`); continue; }
-
-      // guard: no OPS overlap on same vehicle
-      const veh = t.vehicleId;
-      const sD = newStart, eD = newEnd;
-      const conflict = opsTasks.some(o => o.vehicleId === veh && o.id !== id &&
-        overlaps(sD, eD, new Date(o.start), new Date(o.end)));
-      if (conflict) { notes.push(`MOVE_OPS: refused for ${id} — would overlap another ops task for ${veh}`); continue; }
-
-      t.start = toLocalISO(newStart);
-      t.end = toLocalISO(newEnd);
-      t.demandHours = h;
-      notes.push(`Moved ${id} → ${new Date(t.start).toLocaleString()} (${h}h)`);
+    /* ------------ CANCEL_OPS ------------ */
+    if (m.type === 'CANCEL_OPS') {
+      const idx = resolveOpsIndex(opsIdx, String((m as any).id));
+      if (idx < 0) { notes.push(`CANCEL_OPS: ${(m as any).id} not found`); continue; }
+      const t = opsTasks[idx];
+      (t as any).status = 'Cancelled';
+      notes.push(`Cancelled ${t.id}`);
       continue;
     }
 
-    if (op === 'CANCEL_OPS') {
-      const id = m.id as string;
-      const idx = opsTasks.findIndex(o => o.id === id);
-      if (idx < 0) { notes.push(`CANCEL_OPS: ${id} not found`); continue; }
-      opsTasks.splice(idx, 1);
-      opsById.delete(id);
-      notes.push(`Cancelled ${id}`);
-      continue;
-    }
+    /* ------------ ADD_WO ------------ */
+if (m.type === 'ADD_WO') {
+  const id = nextWoId(workorders);
 
-    /* ----- Resources / parts (forward to resourceStore) ----- */
-    if (op.startsWith('ADD_TECH') || op.startsWith('SET_AVAIL') || op.startsWith('ADD_PART') || op.startsWith('SET_PART') || op.startsWith('REMOVE_PART')) {
-      const ack = applyResourceMutations([m]);
-      notes.push(...ack);
-      continue;
-    }
+  // duration (prefer m.hours, fallback m.demandHours)
+  const demand = clampMin((m.hours ?? m.demandHours ?? 1), 0.25);
 
-    notes.push(`Unknown op ${op} — ignored`);
+  // parse start -> compute end
+  const startD = parseISO(m.start);
+  const endD   = startD ? addHours(startD, demand) : null;
+
+  // normalize to your unions
+  const status: WorkOrder['status']     = startD ? 'Scheduled' : 'Open';
+  const priority: WorkOrder['priority'] = normalizePriority((m as any).priority);
+  const woType: WorkOrder['type']       = inferWoType((m as any).title);
+
+  // normalize skills → Skill[]
+  const reqSkills: Skill[] | undefined = (m.requiredSkills && m.requiredSkills.length)
+    ? (m.requiredSkills.map(normalizeSkill).filter(Boolean) as Skill[])
+    : undefined; // keep it undefined if none provided, since your type marks it optional
+
+  const w: WorkOrder = {
+    id,
+    vehicleId: String(m.vehicleId),
+    title: String(m.title),
+    type: woType,                 // <-- REQUIRED by your WorkOrder
+    priority,
+    status,
+    hours: demand,
+    requiredSkills: reqSkills,    // optional in your type, ok to be undefined
+    start: startD ? isoLocal(startD) : undefined,
+    end:   endD   ? isoLocal(endD)   : undefined,
+  };
+
+  workorders.push(w);
+  notes.push(
+    `Added ${w.id} (${w.title}) for ${w.vehicleId}` +
+    (startD ? ` at ${new Date(w.start as any).toLocaleString()}` : '') +
+    ` (${demand}h)`
+  );
+  continue;
+}
+
+
+
+
+    /* ------------ Unknown type (leave a breadcrumb) ------------ */
+    {
+      const typeStr = (m as any)?.type ?? '(missing type/op)';
+      let payload = '';
+      try { payload = JSON.stringify(m); } catch { payload = '[unstringifiable]'; }
+      notes.push(`Unknown mutation type: ${String(typeStr)} for ${payload}`);
+    }
+  }
+
+  // Final safety: if any records still have a trailing 'Z', rewrite to local-ISO
+  for (const w of workorders) {
+    if ((w as any).start && String((w as any).start).endsWith('Z')) (w as any).start = toLocalISO(new Date((w as any).start));
+    if ((w as any).end   && String((w as any).end).endsWith('Z'))   (w as any).end   = toLocalISO(new Date((w as any).end));
+  }
+  for (const t of opsTasks) {
+    if ((t as any).start && String((t as any).start).endsWith('Z')) (t as any).start = toLocalISO(new Date((t as any).start));
+    if ((t as any).end   && String((t as any).end).endsWith('Z'))   (t as any).end   = toLocalISO(new Date((t as any).end));
   }
 
   return { workorders, opsTasks, notes };

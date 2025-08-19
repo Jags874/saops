@@ -1,136 +1,193 @@
 // src/agents/scheduler.ts
 import type { WorkOrder, OpsTask, SchedulerPolicy } from '../types';
 
-function clone<T>(x: T): T { return JSON.parse(JSON.stringify(x)); }
-function toLocalISO(d: Date) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString(); }
-function setTime(d: Date, h: number, m = 0) { const x = new Date(d); x.setHours(h, m, 0, 0); return x; }
-function hoursBetween(a: Date, b: Date) { return Math.max(0, (b.getTime() - a.getTime()) / 36e5); }
-function sameDay(a: Date, b: Date) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+/** ---------- Local time helpers ---------- */
+function isoLocal(d: Date): string {
+  const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return t.toISOString().replace('Z', '');
+}
+function addHours(d: Date, hrs: number) {
+  return new Date(d.getTime() + hrs * 3_600_000);
+}
+function setHMS(d: Date, h: number, m = 0, s = 0, ms = 0) {
+  const x = new Date(d);
+  x.setHours(h, m, s, ms);
+  return x;
+}
+function cloneArr<T>(arr: T[]): T[] {
+  return arr.map(x => ({ ...(x as any) }));
+}
 
-type InternalPolicy = {
+/** ---------- Policy shape used locally ---------- */
+type PolicyExt = SchedulerPolicy & {
   businessHours?: [number, number];
-  opsShiftDays?: number;
-  avoidOpsOverlap?: boolean;
-  forVehicle?: string;
+  windowStartISO?: string;
+  windowEndISO?: string; // end-exclusive
 };
 
-function clampWOToBusinessHours(w: WorkOrder, [hStart, hEnd]: [number, number]) {
-  if (!w.start || !w.end) return w;
-  const s = new Date(w.start), e = new Date(w.end);
-  if (!sameDay(s, e)) return w;
-  const sBH = setTime(s, hStart), eBH = setTime(s, hEnd);
-  if (s < sBH || e > eBH) {
-    const dur = hoursBetween(s, e);
-    const ns = s < sBH ? sBH : s;
-    const ne = new Date(ns); ne.setHours(ns.getHours() + Math.min(dur, hEnd - hStart));
-    w.start = toLocalISO(ns); w.end = toLocalISO(ne);
-  }
-  return w;
+function insideWindow(d: Date, startISO?: string, endISO?: string) {
+  if (!startISO && !endISO) return true;
+  const t = +d;
+  if (startISO && t < +new Date(startISO)) return false;
+  if (endISO && t >= +new Date(endISO)) return false;
+  return true;
 }
 
-function shiftOpsToNightWithin(task: OpsTask, allowDays = 1): OpsTask {
-  const s0 = new Date(task.start), e0 = new Date(task.end);
-  let target = setTime(s0, 20, 0);
-  const deltaDays = (target.getTime() - s0.getTime()) / 86400000;
-  if (Math.abs(deltaDays) > allowDays) {
-    const near = new Date(s0); near.setDate(near.getDate() + (deltaDays > 0 ? allowDays : -allowDays));
-    target = setTime(near, 20, 0);
+function clampStartPreservingDuration(start: Date, durationH: number, open = 9, close = 17) {
+  const dayOpen = setHMS(start, open);
+  const dayClose = setHMS(start, close);
+  const latestStart = addHours(dayClose, -durationH);
+
+  let s = start < dayOpen ? dayOpen : start;
+  if (s > latestStart) {
+    const nextDay = new Date(start);
+    nextDay.setDate(nextDay.getDate() + 1);
+    s = setHMS(nextDay, open);
   }
-  const dur = Math.max(1, Math.round(hoursBetween(s0, e0)));
-  const end = new Date(target); end.setHours(target.getHours() + dur);
-  return { ...task, start: toLocalISO(target), end: toLocalISO(end) };
+  const e = addHours(s, durationH);
+  return { s, e };
 }
 
-function removeOpsOverlaps(ops: OpsTask[]): { ops: OpsTask[]; fixes: number } {
-  let fixes = 0;
-  const byV = new Map<string, OpsTask[]>();
-  for (const t of ops) { const arr = byV.get(t.vehicleId) ?? []; arr.push(t); byV.set(t.vehicleId, arr); }
-  const out: OpsTask[] = [];
-  for (const [, arr] of byV) {
-    arr.sort((a,b)=>new Date(a.start).getTime()-new Date(b.start).getTime());
-    let lastEnd: Date | null = null;
-    for (const t of arr) {
-      let s = new Date(t.start), e = new Date(t.end);
-      if (lastEnd && s < lastEnd) {
-        const dur = Math.max(1, Math.round(hoursBetween(s, e)));
-        s = new Date(lastEnd); e = new Date(s); e.setHours(s.getHours()+dur); fixes++;
-      }
-      out.push({ ...t, start: toLocalISO(s), end: toLocalISO(e) });
-      lastEnd = new Date(e);
+/** ---------- PUBLIC: proposeSchedule (unchanged API) ---------- */
+export function proposeSchedule(
+  workordersIn: WorkOrder[],
+  opsTasksIn: OpsTask[],
+  policy?: SchedulerPolicy
+) {
+  const pol = (policy ?? {}) as PolicyExt;
+  const [open, close] = pol.businessHours ?? [9, 17];
+
+  const workorders = cloneArr(workordersIn);
+  const opsTasks   = cloneArr(opsTasksIn);
+
+  const rationale: string[] = [];
+  const movedIds: string[] = [];
+  const scheduledIds: string[] = [];
+  const unscheduledIds: string[] = [];
+
+  const adjust = (item: any) => {
+    if (!item.start || !item.end) {
+      // Unscheduled items remain unscheduled
+      unscheduledIds.push(item.id);
+      return;
     }
-  }
-  return { ops: out, fixes };
+    const start = new Date(item.start);
+    const end   = new Date(item.end);
+    if (isNaN(+start) || isNaN(+end)) {
+      unscheduledIds.push(item.id);
+      return;
+    }
+
+    // If outside window, rebase to windowStart @ open (if provided)
+    let s = start;
+    if (!insideWindow(s, pol.windowStartISO, pol.windowEndISO) && pol.windowStartISO) {
+      s = setHMS(new Date(pol.windowStartISO), open);
+    }
+
+    const durationH = Math.max(0.25, (+end - +start) / 3_600_000);
+    const before = isoLocal(start) + ' → ' + isoLocal(end);
+    const { s: s2, e: e2 } = clampStartPreservingDuration(s, durationH, open, close);
+    const after = isoLocal(s2) + ' → ' + isoLocal(e2);
+
+    if (before !== after) movedIds.push(item.id);
+    item.start = isoLocal(s2);
+    item.end   = isoLocal(e2);
+    if ((item as any).status === 'Open') (item as any).status = 'Scheduled';
+    scheduledIds.push(item.id);
+  };
+
+  workorders.forEach(adjust);
+  opsTasks.forEach(adjust);
+
+  const moved = movedIds.length;
+  const scheduled = scheduledIds.length;
+  const unscheduled = unscheduledIds.length;
+
+  rationale.push(
+    `Applied business hours ${open}:00–${close}:00 local.`,
+    ...(pol.windowStartISO && pol.windowEndISO
+      ? [`Rebased items into the window ${pol.windowStartISO} – ${pol.windowEndISO} (end‑exclusive).`]
+      : [])
+  );
+
+  return {
+    workorders,
+    opsTasks,
+    moved,
+    scheduled,
+    unscheduled,
+    movedIds,
+    scheduledIds,
+    unscheduledIds,
+    rationale,
+  };
 }
 
-/** Exported for packs */
+/** ---------- PUBLIC: computeClashes (used by context.ts) ----------
+ * Returns exact overlaps between WOs and Ops tasks on the same vehicle.
+ */
 export function computeClashes(
   workorders: WorkOrder[],
   opsTasks: OpsTask[]
-): Array<{ vehicleId: string; workOrderId: string; opsId: string; overlapHours: number }> {
-  const res: Array<{ vehicleId: string; workOrderId: string; opsId: string; overlapHours: number }> = [];
+): {
+  total: number;
+  clashes: Array<{
+    vehicleId: string;
+    woId: string;
+    opsId: string;
+    woStart: string;
+    woEnd: string;
+    opsStart: string;
+    opsEnd: string;
+  }>;
+} {
+  const out: Array<{
+    vehicleId: string;
+    woId: string;
+    opsId: string;
+    woStart: string;
+    woEnd: string;
+    opsStart: string;
+    opsEnd: string;
+  }> = [];
+
   const byVehOps = new Map<string, OpsTask[]>();
-  for (const t of opsTasks) { const arr = byVehOps.get(t.vehicleId) ?? []; arr.push(t); byVehOps.set(t.vehicleId, arr); }
+  for (const t of opsTasks) {
+    if (!t.start || !t.end) continue;
+    if (!byVehOps.has(t.vehicleId)) byVehOps.set(t.vehicleId, []);
+    byVehOps.get(t.vehicleId)!.push(t);
+  }
+
   for (const w of workorders) {
-    if (!(w.status==='Scheduled' || w.status==='In Progress') || !w.start || !w.end) continue;
-    const sW = new Date(w.start), eW = new Date(w.end);
-    for (const o of (byVehOps.get(w.vehicleId) ?? [])) {
-      const sO = new Date(o.start), eO = new Date(o.end);
-      const start = Math.max(sW.getTime(), sO.getTime());
-      const end   = Math.min(eW.getTime(), eO.getTime());
-      const ov = Math.max(0, (end - start) / 36e5);
-      if (ov > 0.01) res.push({ vehicleId: w.vehicleId, workOrderId: w.id, opsId: o.id, overlapHours: Math.round(ov*10)/10 });
-    }
-  }
-  return res;
-}
+    if (!w.start || !w.end) continue;
+    const opsList = byVehOps.get(w.vehicleId);
+    if (!opsList || !opsList.length) continue;
 
-/** Policy-driven proposal */
-export function proposeSchedule(
-  workorders: WorkOrder[],
-  opsTasks: OpsTask[],
-  policy?: SchedulerPolicy
-) {
-  const pol = (policy as Partial<InternalPolicy>) || {};
-  const W = clone(workorders);
-  let O  = clone(opsTasks);
+    const wStart = new Date(w.start);
+    const wEnd   = new Date(w.end);
+    if (isNaN(+wStart) || isNaN(+wEnd)) continue;
 
-  const rationale: string[] = [];
-  const inVehWO = (w: WorkOrder) => !pol.forVehicle || w.vehicleId === pol.forVehicle;
-  const inVehOP = (t: OpsTask)   => !pol.forVehicle || t.vehicleId === pol.forVehicle;
+    for (const t of opsList) {
+      const oStart = new Date(t.start!);
+      const oEnd   = new Date(t.end!);
+      if (isNaN(+oStart) || isNaN(+oEnd)) continue;
 
-  if (typeof pol.opsShiftDays === 'number') {
-    O = O.map(t => inVehOP(t) ? shiftOpsToNightWithin(t, pol.opsShiftDays!) : t);
-    rationale.push(`Shifted ops to night within ±${pol.opsShiftDays} day(s).`);
-  }
-
-  if (pol.avoidOpsOverlap) {
-    const r = removeOpsOverlaps(O.filter(inVehOP));
-    const byId = new Map(r.ops.map(t=>[t.id,t]));
-    O = O.map(t => byId.get(t.id) ?? t);
-    rationale.push(`Resolved ${r.fixes} ops overlaps.`);
-  }
-
-  if (pol.businessHours) {
-    const [hStart, hEnd] = pol.businessHours;
-    for (const w of W) {
-      if ((w.status==='Scheduled' || w.status==='In Progress') && w.start && w.end && inVehWO(w)) {
-        clampWOToBusinessHours(w, [hStart, hEnd]);
+      // overlap if intervals intersect: max(start) < min(end)
+      const latestStart = Math.max(+wStart, +oStart);
+      const earliestEnd = Math.min(+wEnd, +oEnd);
+      if (latestStart < earliestEnd) {
+        out.push({
+          vehicleId: w.vehicleId,
+          woId: w.id,
+          opsId: (t as any).id ?? '',
+          woStart: w.start!,
+          woEnd: w.end!,
+          opsStart: t.start!,
+          opsEnd: t.end!,
+        });
       }
     }
-    rationale.push(`Clamped maintenance into ${hStart}:00–${hEnd}:00.`);
   }
 
-  // Summary numbers
-  let moved = 0, scheduled = 0, unscheduled = 0;
-  const movedIds: string[] = [], scheduledIds: string[] = [], unscheduledIds: string[] = [];
-  for (const w of W) {
-    if (w.status==='Open' || !w.start) { unscheduled++; unscheduledIds.push(w.id); }
-    else { scheduled++; }
-  }
-  if (pol.businessHours || typeof pol.opsShiftDays==='number' || pol.avoidOpsOverlap || pol.forVehicle) {
-    moved = scheduled;
-    movedIds.push(...W.filter(w => w.status!=='Open' && w.start).map(w=>w.id).slice(0,50));
-  }
-
-  return { workorders: W, opsTasks: O, rationale, moved, scheduled, unscheduled, movedIds, scheduledIds, unscheduledIds };
+  return { total: out.length, clashes: out };
 }

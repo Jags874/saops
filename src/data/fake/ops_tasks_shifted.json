@@ -1,0 +1,18 @@
+[
+  {
+    "id": "OP-V001-0-0",
+    "vehicleId": "V001",
+    "title": "Transport Task",
+    "start": "2025-08-21T10:00:00.000Z",
+    "end": "2025-08-21T19:00:00.000Z",
+    "hours": 9
+  },
+  {
+    "id": "OP-V020-6-1",
+    "vehicleId": "V020",
+    "title": "Transport Task",
+    "start": "2025-08-28T18:00:00.000Z",
+    "end": "2025-08-28T22:00:00.000Z",
+    "hours": 4
+  }
+]

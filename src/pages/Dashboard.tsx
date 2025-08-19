@@ -19,26 +19,117 @@ import { buildPartsPack, analyzePartsWithLLM } from '../agents/parts';
 import { reseedGenericTechnicians } from '../data/resourceStore';
 import DemoFooter from '../components/DemoFooter';
 
-// Shift an ISO range but keep duration; clamp into [8,17] window inside the same day.
-function normalizeIntoDayWindow(startISO: string, endISO: string, hours: [number, number] = [8,17]) {
-  const start = new Date(startISO);
-  const end   = new Date(endISO);
-  if (isNaN(+start) || isNaN(+end)) return { startISO, endISO };
-  const durMs = end.getTime() - start.getTime();
+/** ========= Local helpers (duration preserving, date range parsing) ========= */
 
-  const d = new Date(start);
-  d.setHours(hours[0], 0, 0, 0);
-  const sDay = d;
-  const eDay = new Date(start); eDay.setHours(hours[1], 0, 0, 0);
+// Local-ISO writer (no trailing 'Z')
+function isoLocal(d: Date): string {
+  const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return t.toISOString().replace('Z', '');
+}
+function addHours(d: Date, hrs: number) {
+  return new Date(d.getTime() + hrs * 3_600_000);
+}
+function setHMS(d: Date, h: number, m = 0, s = 0, ms = 0) {
+  const x = new Date(d);
+  x.setHours(h, m, s, ms);
+  return x;
+}
+function clampStartPreservingDuration(start: Date, durationH: number, open = 9, close = 17) {
+  const dayOpen = setHMS(start, open);
+  const dayClose = setHMS(start, close);
+  const latestStart = addHours(dayClose, -durationH);
 
-  // if duration doesn't fit, just cap at end-of-window
-  const newStart = sDay;
-  const newEnd = new Date(Math.min(newStart.getTime() + durMs, eDay.getTime()));
-
-  const toLocal = (x: Date) => new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString();
-  return { startISO: toLocal(newStart), endISO: toLocal(newEnd) };
+  let s = start < dayOpen ? dayOpen : start;
+  if (s > latestStart) {
+    const nextDay = new Date(start);
+    nextDay.setDate(nextDay.getDate() + 1);
+    s = setHMS(nextDay, open);
+  }
+  const e = addHours(s, durationH);
+  return { s, e };
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11
+};
+function parseDayLocal(y: number, mZero: number, d: number) {
+  return new Date(y, mZero, d, 0, 0, 0, 0);
+}
+function parseNaturalRange(text: string): { startLocalISO: string; endLocalISO: string } | null {
+  const t = text.toLowerCase();
+
+  // "22–28 aug 2025" / "22-28 aug 2025"
+  let m = t.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s*([a-z]+)\s*(20\d{2})/i);
+  if (m) {
+    const d1 = parseInt(m[1], 10);
+    const d2 = parseInt(m[2], 10);
+    const month = MONTHS[m[3].slice(0, 3)];
+    const year = parseInt(m[4], 10);
+    if (Number.isInteger(month)) {
+      const start = parseDayLocal(year, month, d1);
+      const end = parseDayLocal(year, month, d2 + 1); // end exclusive
+      return { startLocalISO: isoLocal(start), endLocalISO: isoLocal(end) };
+    }
+  }
+
+  // "22/8/2025 – 28/8/2025"
+  m = t.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\s*[-–]\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})/);
+  if (m) {
+    const d1 = parseInt(m[1], 10), mo1 = parseInt(m[2], 10) - 1, y1 = parseInt(m[3], 10);
+    const d2 = parseInt(m[4], 10), mo2 = parseInt(m[5], 10) - 1, y2 = parseInt(m[6], 10);
+    const start = parseDayLocal(y1, mo1, d1);
+    const end = parseDayLocal(y2, mo2, d2 + 1);
+    return { startLocalISO: isoLocal(start), endLocalISO: isoLocal(end) };
+  }
+
+  return null;
+}
+function insideWindow(d: Date, startISO?: string, endISO?: string) {
+  if (!startISO && !endISO) return true;
+  const t = +d;
+  if (startISO && t < +new Date(startISO)) return false;
+  if (endISO && t >= +new Date(endISO)) return false;
+  return true;
+}
+
+// Local policy shape used by page + scheduler
+export type PolicyExt = {
+  businessHours?: [number, number];
+  windowStartISO?: string;
+  windowEndISO?: string;
+};
+
+// post-process a preview to respect business hours + window, preserving duration
+function adjustPlanToPolicy(
+  plan: { workorders: any[]; opsTasks: any[] },
+  policy: PolicyExt
+) {
+  const [open, close] = policy.businessHours ?? [9, 17];
+
+  const fix = (item: any) => {
+    if (!item.start || !item.end) return;
+    const start = new Date(item.start);
+    const end = new Date(item.end);
+    if (isNaN(+start) || isNaN(+end)) return;
+
+    // rebase to window start @ open if outside window
+    let s = start;
+    if (!insideWindow(s, policy.windowStartISO, policy.windowEndISO) && policy.windowStartISO) {
+      s = setHMS(new Date(policy.windowStartISO), open);
+    }
+
+    const durationH = Math.max(0.25, (+end - +start) / 3_600_000);
+    const { s: s2, e: e2 } = clampStartPreservingDuration(s, durationH, open, close);
+    item.start = isoLocal(s2);
+    item.end = isoLocal(e2);
+  };
+
+  plan.workorders.forEach(fix);
+  plan.opsTasks.forEach(fix);
+  return plan;
+}
+
+/* ============================= Component ============================= */
 
 type StatusFilter = 'ALL' | 'AVAILABLE' | 'DUE' | 'DOWN';
 
@@ -59,17 +150,10 @@ type PlanSnapshot = {
 export default function Dashboard() {
   useEffect(() => { reseedGenericTechnicians(); }, []);
 
-  // Base data (ops in state so agent edits are visible)
+  // Base data (ops in state so agent edits are visible). IMPORTANT: no UI clamping here.
   const vehicles = useMemo(() => getVehicles(20), []);
   const [workorders, setWorkorders] = useState(() => getWorkOrders());
-  const [opsTasks, setOpsTasks] = useState(() => {
-    const ops = getOpsTasks(7);
-    return ops.map(t => {
-      if (!t.start || !t.end) return t;
-      const { startISO, endISO } = normalizeIntoDayWindow(t.start, t.end, [8,17]);
-      return { ...t, start: startISO, end: endISO };
-    });
-  });
+  const [opsTasks, setOpsTasks] = useState(() => getOpsTasks(7));
 
   // UI state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
@@ -158,15 +242,8 @@ export default function Dashboard() {
         } : undefined
       };
 
-      const decision = await analyzeWithLLM(text, pack, history, planCtx);
-
-      // if PLAN includes policy, auto-propose to create a preview
-      const policy = (decision as any)?.policy as SchedulerPolicy | undefined;
-      if (decision.intent === 'PLAN' && policy) {
-        await agentSuggest(policy);
-        return { ...decision, answer: decision.answer ?? 'Proposed a new plan.' };
-      }
-      return decision;
+      // Return decision only; we'll apply side-effects in onDecide
+      return await analyzeWithLLM(text, pack, history, planCtx);
     }
 
     if (activeAgent === 'reliability') {
@@ -182,11 +259,23 @@ export default function Dashboard() {
     return { intent: 'QA', answer: `The ${activeAgent} agent isn’t wired up yet — try Scheduler, Reliability, or Parts.` };
   };
 
-  const agentSuggest = async (policy?: SchedulerPolicy) => {
-    const res = proposeSchedule(baseWorkorders, baseOps, policy);
+  // NOTE: widen the type locally (we always cast from LLM anyway)
+  const agentSuggest = async (policy?: PolicyExt) => {
+    const res = proposeSchedule(baseWorkorders, baseOps, policy as SchedulerPolicy);
+
+    // post-process to respect window + hours & preserve durations
+    const adjusted = adjustPlanToPolicy(
+      { workorders: res.workorders, opsTasks: res.opsTasks },
+      {
+        businessHours: (policy?.businessHours ?? [9, 17]),
+        windowStartISO: policy?.windowStartISO,
+        windowEndISO: policy?.windowEndISO,
+      }
+    );
+
     const snap: PlanSnapshot = {
-      workorders: res.workorders,
-      opsTasks: res.opsTasks,
+      workorders: adjusted.workorders,
+      opsTasks: adjusted.opsTasks,
       summary: res.rationale,
       moved: res.moved,
       scheduled: res.scheduled,
@@ -329,29 +418,6 @@ export default function Dashboard() {
     setHelloNonce(Date.now());
   };
 
-  // central side-effects handler (fixes earlier “d not defined” issue)
-  const handleDecisionSideEffects = (decision: AgentDecision) => {
-    if (decision.intent === 'MUTATE' && Array.isArray((decision as any).mutations) && (decision as any).mutations.length) {
-      const { workorders: wo2, opsTasks: op2, notes } =
-        applyMutationsToPlan(workorders, opsTasks, (decision as any).mutations, { businessHours: [8, 17] });
-
-      setWorkorders(wo2);
-      setOpsTasks(op2);
-      setPreview(null);
-
-      const base = (decision as any).answer ? String((decision as any).answer) + '\n' : '';
-      return base + `Applied changes:\n- ${notes.join('\n- ')}`;
-    }
-
-    if (decision.intent === 'PLAN' && (decision as any).policy) {
-      const pol = (decision as any).policy as SchedulerPolicy;
-      void agentSuggest(pol); // sets preview
-      return (decision as any).answer ?? undefined;
-    }
-
-    return undefined;
-  };
-
   return (
     <div className="p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:[grid-template-columns:1fr_18rem] gap-6">
       <div className="space-y-6">
@@ -376,14 +442,50 @@ export default function Dashboard() {
         <AgentConsole
           title={activeAgent === 'scheduler' ? 'Scheduler Agent' : activeAgent === 'reliability' ? 'Reliability Agent' : 'Parts Interpreter'}
           hasPreview={!!preview}
-          onSuggest={agentSuggest}
+          onSuggest={(pol?: SchedulerPolicy) => agentSuggest(pol as unknown as PolicyExt)}
           onAccept={agentAccept}
-          onReject={agentReject}
+          onReject={() => setPreview(null)}
           onReport={agentReport}
           onDecide={async (text, history) => {
             const decision = await agentDecide(text, history);
-            const msg = handleDecisionSideEffects(decision);
-            return msg ? ({ intent: 'QA', answer: msg } as AgentDecision) : decision;
+
+            // MUTATE → apply immediately
+            if (decision.intent === 'MUTATE' && (decision as any).mutations?.length) {
+              const baseWos = preview ? preview.workorders : workorders;
+              const baseOps = preview ? preview.opsTasks   : opsTasks;
+
+              const { workorders: wo2, opsTasks: op2, notes } =
+                applyMutationsToPlan(baseWos, baseOps, (decision as any).mutations, { businessHours: [9,17] });
+
+              setWorkorders(wo2);
+              setOpsTasks(op2);
+              setPreview(null);
+
+              return {
+                ...decision,
+                intent: 'QA',
+                answer: (decision.answer ? decision.answer + '\n' : '') +
+                        (notes.length ? `Applied changes:\n- ${notes.join('\n- ')}` : 'Applied changes.'),
+              };
+            }
+
+            // PLAN → parse range from the *user text*, augment policy, then propose + preview
+            if (decision.intent === 'PLAN' && (decision as any).policy) {
+              const pol: PolicyExt = { ...(decision as any).policy };
+
+              // parse "22–28 Aug 2025" / "22/8/2025–28/8/2025"
+              const range = parseNaturalRange(text);
+              if (range) {
+                pol.windowStartISO = range.startLocalISO;
+                pol.windowEndISO   = range.endLocalISO;
+              }
+              if (!pol.businessHours) pol.businessHours = [9,17];
+
+              await agentSuggest(pol);
+              return { ...decision, answer: decision.answer ?? 'Proposed a new plan.' };
+            }
+
+            return decision;
           }}
           helloMessage={helloMessage}
           helloNonce={helloNonce}
@@ -406,7 +508,7 @@ export default function Dashboard() {
               </div>
               <div className="flex gap-2 shrink-0">
                 <button onClick={agentAccept} className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-sm">Accept</button>
-                <button onClick={agentReject} className="px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm">Reject</button>
+                <button onClick={() => setPreview(null)} className="px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm">Reject</button>
               </div>
             </div>
           </div>
