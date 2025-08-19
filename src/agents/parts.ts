@@ -1,147 +1,185 @@
 // src/agents/parts.ts
-import type { QATurn, AgentDecision } from '../types';
-import { getWorkOrders } from '../data/adapter';
-import * as partsModule from '../data/partsCatalog';
+import type { AgentDecision, QATurn, WorkOrder, Vehicle } from '../types';
+import { getWorkOrders, getVehicles } from '../data/adapter';
+// Be resilient to either export style from partsCatalog.ts
+// (some repos export a function, others a constant array)
+import * as PC from '../data/partsCatalog';
 
-const OPENAI_API_BASE =
-  (import.meta.env?.VITE_OPENAI_API_BASE as string) || 'https://api.openai.com/v1';
-const OPENAI_API_KEY = import.meta.env?.VITE_OPENAI_API_KEY as string | undefined;
-const OPENAI_MODEL =
-  (import.meta.env?.VITE_OPENAI_MODEL as string) || 'gpt-4o-mini';
-
-function extractOutputText(data: any): string {
-  if (typeof data?.output_text === 'string' && data.output_text.trim()) return data.output_text;
-  if (Array.isArray(data?.output)) {
-    const texts: string[] = [];
-    for (const item of data.output) {
-      const content = item?.content;
-      if (Array.isArray(content)) for (const c of content) if (typeof c?.text === 'string') texts.push(c.text);
-    }
-    if (texts.length) return texts.join('\n');
-  }
-  if (Array.isArray(data?.choices) && data.choices[0]?.message?.content) return String(data.choices[0].message.content);
-  if (typeof data?.text === 'string') return data.text;
-  return '';
-}
-
-async function callOpenAI(input: string, temperature = 0.3, maxTokens = 700): Promise<string> {
-  if (!OPENAI_API_KEY) return 'LLM unavailable (no API key).';
-  const res = await fetch(`${OPENAI_API_BASE}/responses`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ model: OPENAI_MODEL, input, temperature, max_output_tokens: maxTokens }),
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    const reason = data?.error?.message || res.statusText;
-    throw new Error(`Model call failed: ${reason}`);
-  }
-  const text = extractOutputText(data);
-  return text || 'I could not determine parts without more detail.';
-}
-
-// ---- Catalog normalization from whatever export shape you have ----
-type CatalogItemIn = Record<string, unknown>;
-type CatalogItemOut = {
+// ---------------- Types for catalog rows ----------------
+type CatalogRow = {
   part_id: string;
   part_name: string;
   subsystem?: string;
+  mean_time_between_failures?: number;
   lead_time_days?: number;
   unit_cost?: number;
+  supplier?: string;
+  keywords?: string;
 };
-function pickCatalogArray(mod: any): CatalogItemIn[] {
-  const candidates = [mod?.default, mod?.partsCatalog, mod?.catalog, mod?.PARTS, mod?.items, mod?.parts, mod];
-  for (const c of candidates) if (Array.isArray(c)) return c as CatalogItemIn[];
-  if (mod && typeof mod === 'object') {
-    for (const k of Object.keys(mod)) {
-      const v = (mod as any)[k];
-      if (Array.isArray(v)) return v as CatalogItemIn[];
-    }
+
+// ---------------- Catalog loader (tolerant) ----------------
+function loadPartsCatalog(): CatalogRow[] {
+  // Prefer a function export if present
+  const maybeFn = (PC as any)?.getPartsCatalog;
+  if (typeof maybeFn === 'function') {
+    const data = maybeFn();
+    return Array.isArray(data) ? data : [];
   }
-  return [];
-}
-function toNum(v: unknown): number | undefined {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : undefined;
-}
-function normalizeCatalog(raw: CatalogItemIn[]): CatalogItemOut[] {
-  return raw.map((p: CatalogItemIn) => {
-    const x = p as any;
-    return {
-      part_id: x.part_id ?? x.partId ?? x.id ?? '',
-      part_name: x.part_name ?? x.partName ?? x.name ?? '',
-      subsystem: x.subsystem ?? x.system ?? undefined,
-      lead_time_days: toNum(x.lead_time_days ?? x.leadTimeDays ?? x.leadTime),
-      unit_cost: toNum(x.unit_cost ?? x.unitCost ?? x.cost),
-    };
-  });
+  // Otherwise look for a constant array
+  const arr = (PC as any)?.partsCatalog;
+  return Array.isArray(arr) ? arr : [];
 }
 
+// ---------------- Pack builder ----------------
 export function buildPartsPack() {
-  const rawArr = pickCatalogArray(partsModule);
-  const catalog = normalizeCatalog(rawArr);
-  const workorders = getWorkOrders().map(w => ({
-    id: w.id,
-    vehicleId: w.vehicleId,
-    description: w.description,
-    subsystem: (w as any).subsystem
-  }));
-  return { catalog, workorders };
+  const workorders: WorkOrder[] = (getWorkOrders?.() ?? []);
+  const vehicles: Vehicle[] = (getVehicles?.(20) ?? []);
+  const catalog: CatalogRow[] = loadPartsCatalog();
+  return { partsCatalog: catalog, workorders, vehicles };
 }
 
-function isGreeting(s: string) {
-  const t = s.trim().toLowerCase();
-  return ['hi','hello','hey','yo','howdy','gday','g’day','good morning','good evening'].some(g => t.startsWith(g));
-}
-function skuFor(name: string) {
-  const base = name.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
-  const tail = Math.abs(hash(name)).toString(36).toUpperCase().slice(0, 4).padStart(4,'0');
-  return `${base}-${tail}`;
-}
-function hash(s: string) { let h = 0; for (let i = 0; i < s.length; i++) h = ((h << 5) - h) + s.charCodeAt(i) | 0; return h; }
+// ---------------- OpenAI helper (Responses API) ----------------
+async function callOpenAI(prompt: string): Promise<string> {
+  const key = (import.meta as any).env?.VITE_OPENAI_API_KEY;
+  if (!key) return 'LLM unavailable: missing VITE_OPENAI_API_KEY';
 
+  const res = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini-2024-07-18',
+      input: prompt,
+      temperature: 0.3,
+      max_output_tokens: 700,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    return `Model call failed (${res.status}): ${text || res.statusText}`;
+  }
+
+  const data = await res.json();
+  try {
+    const first = data?.output?.[0];
+    if (first?.type === 'message') {
+      const parts = first?.content || [];
+      const txt = parts.map((p: any) => (p?.text ?? '')).join('').trim();
+      return txt || JSON.stringify(data);
+    }
+  } catch {}
+  return typeof data === 'string' ? data : JSON.stringify(data);
+}
+
+// ---------------- Helpers ----------------
+const WO_REGEX = /WO-(\d{3,})/i;
+
+function pickWorkOrder(text: string, pack: ReturnType<typeof buildPartsPack>): WorkOrder | undefined {
+  const m = text.match(WO_REGEX);
+  if (!m) return undefined;
+  const id = `WO-${m[1]}`;
+  return pack.workorders.find(w => w.id === id);
+}
+
+function woMini(wo: WorkOrder | undefined) {
+  if (!wo) return null;
+  return {
+    id: wo.id,
+    vehicleId: wo.vehicleId,
+    title: wo.title,
+    type: wo.type,
+    priority: wo.priority,
+    status: wo.status,
+    start: wo.start,
+    end: wo.end,
+    subsystem: wo.subsystem,
+    requiredSkills: wo.requiredSkills ?? [],
+    requiredParts: wo.requiredParts ?? [],
+    requiredTools: wo.requiredTools ?? [],
+    description: wo.description ?? '',
+  };
+}
+
+// Very simple candidate search over the catalog using WO context
+function candidatesForWO(wo: WorkOrder | undefined, catalog: CatalogRow[]): CatalogRow[] {
+  if (!Array.isArray(catalog) || catalog.length === 0) return [];
+  if (!wo) return catalog.slice(0, Math.min(6, catalog.length));
+
+  const hay = `${wo.title ?? ''} ${wo.description ?? ''} ${wo.subsystem ?? ''}`.toLowerCase();
+
+  const hits = catalog.filter((row) => {
+    const s = `${row.part_name ?? ''} ${row.subsystem ?? ''} ${row.keywords ?? ''}`.toLowerCase();
+    // Prefer direct subsystem match
+    if (wo.subsystem && s.includes(String(wo.subsystem).toLowerCase())) return true;
+    // Common heuristics
+    if (hay.includes('thermostat') && s.includes('thermostat')) return true;
+    if (hay.includes('coolant') && s.includes('cool')) return true;
+    if (hay.includes('overheat') && (s.includes('thermostat') || s.includes('cool'))) return true;
+    if (hay.includes('engine') && s.includes('engine')) return true;
+    if (hay.includes('brake') && s.includes('brake')) return true;
+    if (hay.includes('transmission') && s.includes('transmission')) return true;
+    if (hay.includes('electrical') && s.includes('electrical')) return true;
+    return false;
+  });
+
+  return (hits.length ? hits : catalog).slice(0, Math.min(6, catalog.length));
+}
+
+// ---------------- Public entry ----------------
 export async function analyzePartsWithLLM(
   userText: string,
   pack: ReturnType<typeof buildPartsPack>,
-  history: QATurn[] = []
+  history: QATurn[]
 ): Promise<AgentDecision> {
-  if (isGreeting(userText)) {
-    return {
-      intent: 'QA',
-      answer: "Hi! Tell me a symptom (e.g., “engine overheating at idle”, “starter intermittently dead”) or reference a work order ID, and I’ll suggest likely parts with lead times and costs."
-    };
-  }
-
-  // If user referenced a WO ID, include that WO context
-  const woMatch = userText.match(/\bWO-\d{3,}\b/i);
-  let woCtx: any = null;
-  if (woMatch) {
-    const id = woMatch[0].toUpperCase();
-    woCtx = pack.workorders.find(w => w.id === id) || null;
-  }
-
-  const safePack = JSON.stringify({ catalog: pack.catalog, workorder: woCtx }).slice(0, 90_000);
+  const catalog: CatalogRow[] = Array.isArray(pack.partsCatalog) ? pack.partsCatalog : [];
+  const wo = pickWorkOrder(userText, pack);
+  const woCtx = woMini(wo);
+  const cands = candidatesForWO(wo, catalog);
 
   const sys = `
-You are a Parts Interpreter for heavy-vehicle maintenance.
-Task:
-- Map symptoms or work order descriptions to likely parts (with plausible supplier info).
-- Cross-check against the provided parts catalog when possible.
-- If uncertain, ask a brief clarifying question instead of fabricating.
-Output:
-- A concise recommendation with: Part name, SKU (invent one if needed), likely supplier, typical lead time, unit cost (estimate if missing), and quantity rationale.
-- If the user only greets you, do NOT invent parts; invite them to share symptoms or a WO ID.`;
+You are a Parts Interpreter for a heavy-vehicle fleet.
 
-  const prompt = [
-    sys.trim(),
-    `\nDATA_PACK_JSON:\n${safePack}\n`,
-    `\nUSER:\n${userText}\n`,
-    `If recommending a part not in the catalog, invent a realistic SKU like ${skuFor('Thermostat Valve')} and reasonable lead time/cost.`,
-  ].join('\n');
+Your job:
+- Map faults / work orders to likely parts and quantities.
+- Propose realistic SKUs, suppliers, unit costs, and lead times (fabricate but plausible).
+- If the user asks for a purchase order, draft concise PO lines (SKU, desc, qty, cost, lead time, supplier).
+- If a work order is referenced (e.g., "WO-011"), **use its context** (title, subsystem, description, required parts/tools) and DO NOT ask for symptoms again.
+- If no work order is referenced AND the user gives no symptoms, ask at most 1–2 clarifying questions.
 
-  const text = await callOpenAI(prompt, 0.3, 700);
-  return { intent: 'QA', answer: text?.trim() || 'I could not determine parts without more detail.' };
+Important:
+- Keep answers actionable and short.
+- Prefer the provided catalog *when relevant*, but you may propose additional common items (e.g., gaskets, O-rings, sealants) with plausible SKUs/costs.
+- If multiple alternatives exist, list top 2–3 with trade-offs (quality/price/lead time).`;
+
+  const facts = {
+    workOrder: woCtx,
+    candidateParts: cands.map((row) => ({
+      part_id: row.part_id,
+      part_name: row.part_name,
+      subsystem: row.subsystem ?? '',
+      mean_time_between_failures: row.mean_time_between_failures ?? null,
+      lead_time_days: row.lead_time_days ?? null,
+      unit_cost: row.unit_cost ?? null,
+      supplier_hint: row.supplier ?? '',
+    })),
+  };
+
+  const prompt = `${sys}
+
+--- CONTEXT ---
+${JSON.stringify(facts, null, 2)}
+
+--- HISTORY ---
+${history.map(h => `${h.role.toUpperCase()}: ${h.text}`).join('\n')}
+
+--- USER ---
+${userText}
+
+Respond with a concise, helpful answer. If drafting a PO, list clear line items.`;
+
+  const answer = await callOpenAI(prompt);
+  return { intent: 'QA', answer };
 }

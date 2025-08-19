@@ -1,309 +1,308 @@
 // src/agents/agentRuntime.ts
-import type { QATurn, AgentDecision, PlanContext } from '../types';
-import { buildKnowledgePack, type KnowledgePack } from './context';
+import type { AgentDecision, QATurn, PlanContext } from '../types';
+import { buildKnowledgePack, WEEK_START_ISO } from './context';
 
-const OPENAI_API_BASE =
-  (import.meta.env?.VITE_OPENAI_API_BASE as string) || 'https://api.openai.com/v1';
-const OPENAI_API_KEY = import.meta.env?.VITE_OPENAI_API_KEY as string | undefined;
-const OPENAI_MODEL =
-  (import.meta.env?.VITE_OPENAI_MODEL as string) || 'gpt-4o-mini';
+// ----------------- OpenAI call helper (Responses API) -----------------
+async function callOpenAI(prompt: string): Promise<string> {
+  const key = (import.meta as any).env?.VITE_OPENAI_API_KEY;
+  if (!key) return 'LLM unavailable: missing VITE_OPENAI_API_KEY';
 
-// --- Robust extraction for Responses API and fallbacks ---
-function extractOutputText(data: any): string {
-  if (typeof data?.output_text === 'string' && data.output_text.trim()) return data.output_text;
-  if (Array.isArray(data?.output)) {
-    const texts: string[] = [];
-    for (const item of data.output) {
-      const content = item?.content;
-      if (Array.isArray(content)) {
-        for (const c of content) if (typeof c?.text === 'string') texts.push(c.text);
-      }
-    }
-    if (texts.length) return texts.join('\n');
-  }
-  if (Array.isArray(data?.choices) && data.choices[0]?.message?.content) {
-    return String(data.choices[0].message.content);
-  }
-  if (typeof data?.text === 'string') return data.text;
-  return '';
-}
-
-async function callOpenAI(input: string, temperature = 0.2, maxTokens = 900): Promise<string> {
-  if (!OPENAI_API_KEY) return 'LLM unavailable (no API key).';
-  const res = await fetch(`${OPENAI_API_BASE}/responses`, {
+  const res = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Authorization': `Bearer ${key}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: OPENAI_MODEL,
-      input,
-      temperature,
-      max_output_tokens: maxTokens,
+      model: 'gpt-4o-mini-2024-07-18',
+      input: prompt,
+      temperature: 0.2,
+      max_output_tokens: 700,
     }),
   });
-  const data = await res.json();
+
   if (!res.ok) {
-    const reason = data?.error?.message || res.statusText;
-    throw new Error(`Model call failed: ${reason}`);
-  }
-  const text = extractOutputText(data);
-  return text || 'I could not derive an answer from the model.';
-}
-
-// --- Helpers: parse simple date phrases for the static week (22–28 Aug 2025) ---
-const WEEK_START_ISO = '2025-08-22T00:00:00';
-const WEEK_START = new Date(WEEK_START_ISO);
-const DAY_NAME: Record<string, number> = { fri:0, sat:1, sun:2, mon:3, tue:4, wed:5, thu:6 };
-function toYMD(offset: number) {
-  const d = new Date(WEEK_START.getTime() + offset * 86400000);
-  return d.toISOString().slice(0, 10);
-}
-function parseTimeToken(tok: string): [number, number] | null {
-  const t = tok.trim().toLowerCase();
-  // "9am", "9:30am", "14:15"
-  const m1 = t.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
-  if (m1) {
-    let hh = Number(m1[1]);
-    const mm = Number(m1[2] ?? '0');
-    const ap = m1[3];
-    if (ap === 'pm' && hh < 12) hh += 12;
-    if (ap === 'am' && hh === 12) hh = 0;
-    return [hh, mm];
-  }
-  const m2 = t.match(/^(\d{1,2}):(\d{2})$/);
-  if (m2) return [Number(m2[1]), Number(m2[2])];
-  const m3 = t.match(/^(\d{1,2})$/);
-  if (m3) return [Number(m3[1]), 0];
-  return null;
-}
-function parseDayOrDateToken(tok: string): number | null {
-  const t = tok.trim().toLowerCase();
-  if (DAY_NAME[t] !== undefined) return DAY_NAME[t];
-  const m = t.match(/^(\d{1,2})\s*(aug|august)$/);
-  if (m) {
-    const day = Number(m[1]);
-    const base = new Date('2025-08-22T00:00:00');
-    const idx = day - 22;
-    if (idx >= 0 && idx <= 6) return idx;
-  }
-  return null;
-}
-
-/**
- * Normalize & lightly validate LLM mutations:
- * - Uppercase known IDs (WO-xxx, OPS-xxx, Vxxx)
- * - Fill start/end from simple natural tokens in `userText` if missing
- * - Clamp to the static week and business hours when underspecified
- * - Drop unknown ops (anything not in the allowed list)
- */
-function normalizeMutations(
-  muts: any[] | undefined,
-  userText: string,
-  pack: KnowledgePack
-): any[] | undefined {
-  if (!Array.isArray(muts) || !muts.length) return muts;
-
-  const allowed = new Set([
-    'ADD_WORKORDER','MOVE_WORKORDER','CANCEL_WORKORDER','UPDATE_WORKORDER',
-    'MOVE_OPS','CANCEL_OPS','ADD_OPS',
-    'ADD_TECH','REMOVE_TECH','SET_AVAILABILITY',
-    'ASSUME_PART_AVAILABLE'
-  ]);
-
-  // quick userText parse: look for time & day tokens
-  const tokens = userText.split(/[\s,]+/);
-  let pickedDay: number | null = null;
-  let pickedTime: [number, number] | null = null;
-  for (const t of tokens) {
-    if (pickedDay === null) {
-      const d = parseDayOrDateToken(t);
-      if (d !== null) pickedDay = d;
-    }
-    if (!pickedTime) {
-      const tm = parseTimeToken(t);
-      if (tm) pickedTime = tm;
-    }
+    const text = await res.text().catch(() => '');
+    return `Model call failed (${res.status}): ${text || res.statusText}`;
   }
 
-  const bh = pack.businessHours || [8, 17];
-
-  const knownWO = new Set(pack.idSets.workorderIds);
-  const knownOPS = new Set(pack.idSets.opsIds);
-  const knownVEH = new Set(pack.idSets.vehicleIds);
-
-  const toISO = (dayIdx: number, hh: number, mm: number) => {
-    const d = new Date(WEEK_START.getTime() + dayIdx * 86400000);
-    d.setHours(hh, mm, 0, 0);
-    return d.toISOString().slice(0,19);
-  };
-
-  const fixed = muts
-    .filter(m => m && allowed.has(String(m.op || m.OP || '').toUpperCase()))
-    .map(m => {
-      const op = String(m.op || m.OP).toUpperCase();
-
-      const out: any = { op };
-
-      // normalize IDs
-      if (m.id) out.id = String(m.id).toUpperCase();
-      if (m.opsId) out.opsId = String(m.opsId).toUpperCase();
-      if (m.vehicleId) out.vehicleId = String(m.vehicleId).toUpperCase();
-
-      // pick duration/hours if provided
-      if (typeof m.hours === 'number') out.hours = m.hours;
-
-      // copy common fields
-      for (const k of ['title','priority','type','requiredSkills']) {
-        if (m[k] !== undefined) out[k] = m[k];
-      }
-
-      // choose start/end
-      const haveStart = typeof m.start === 'string' && m.start.includes('T');
-      const haveEnd   = typeof m.end === 'string' && m.end.includes('T');
-
-      if (haveStart) out.start = m.start;
-      if (haveEnd) out.end = m.end;
-
-      // if missing start/end but day/time tokens present, compose them
-      if ((op === 'MOVE_WORKORDER' || op === 'MOVE_OPS' || op === 'ADD_WORKORDER' || op === 'ADD_OPS') && (!haveStart || !haveEnd)) {
-        const dIdx = pickedDay ?? 0; // default to day 0 if the user didn’t specify
-        const [hStart, mStart] = pickedTime ?? [bh[0], 0];
-        const hrs = Number(m.hours ?? out.hours ?? 1);
-        const startISO = toISO(dIdx, hStart, mStart);
-        const endISO = toISO(dIdx, Math.min(23, hStart + Math.max(1, Math.ceil(hrs))), mStart);
-        out.start = out.start ?? startISO;
-        out.end   = out.end   ?? endISO;
-      }
-
-      // Basic ID existence checks — don’t drop, but mark unknown so UI can message user
-      if (op.includes('WORKORDER') && out.id && !knownWO.has(out.id)) {
-        out._unknownId = true;
-      }
-      if (op.includes('OPS') && out.opsId && !knownOPS.has(out.opsId)) {
-        out._unknownId = true;
-      }
-      if (out.vehicleId && !knownVEH.has(out.vehicleId)) {
-        out._unknownVehicle = true;
-      }
-
-      return out;
-    });
-
-  return fixed.length ? fixed : undefined;
-}
-
-// Extract first JSON object from a model answer
-function extractFirstJSON(text: string): any | null {
-  const fence = /```(?:json)?\s*([\s\S]*?)\s*```/i;
-  const m = text.match(fence);
-  const raw = m ? m[1] : text;
+  const data = await res.json();
   try {
-    return JSON.parse(raw);
-  } catch {
-    const obj = text.match(/\{[\s\S]*\}/);
-    if (obj) {
-      try { return JSON.parse(obj[0]); } catch {}
+    const first = data?.output?.[0];
+    if (first?.type === 'message') {
+      const parts = first?.content || [];
+      const txt = parts.map((p: any) => (p?.text ?? '')).join('').trim();
+      return txt || JSON.stringify(data);
     }
-    return null;
+  } catch {}
+  return typeof data === 'string' ? data : JSON.stringify(data);
+}
+
+// ----------------- Date helpers (anchor: 22 Aug 2025) -----------------
+const MONTHS = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+function pad(n: number) { return String(n).padStart(2, '0'); }
+
+function firstISOOrNull(s?: string): string | null {
+  if (!s) return null;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(s)) {
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return null;
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
   }
+  const t = s.trim().toLowerCase().replace(/\s+/g, ' ');
+  let m = t.match(/(\d{4})-(\d{2})-(\d{2})[ t](\d{1,2}):(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}T${pad(+m[4])}:${m[5]}:00`;
+
+  const anchorYear = new Date(WEEK_START_ISO).getFullYear();
+  m = t.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?(?:\s*on)?\s*(\d{1,2})\s*([a-z]{3,})/i);
+  if (m) {
+    let hh = +m[1]; const mm = m[2] ? +m[2] : 0; const ap = m[3];
+    const day = +m[4]; const monTxt = m[5].slice(0,3);
+    const mi = MONTHS.indexOf(monTxt);
+    if (ap) { const apL = ap.toLowerCase(); if (apL === 'pm' && hh < 12) hh += 12; if (apL === 'am' && hh === 12) hh = 0; }
+    if (mi >= 0 && day >= 1 && day <= 31) return `${anchorYear}-${pad(mi+1)}-${pad(day)}T${pad(hh)}:${pad(mm)}:00`;
+  }
+  m = t.match(/(\d{1,2})\s*([a-z]{3,})\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (m) {
+    const day = +m[1]; const mi = MONTHS.indexOf(m[2].slice(0,3));
+    let hh = +m[3]; const mm = m[4] ? +m[4] : 0; const ap = m[5];
+    const anchorYear2 = new Date(WEEK_START_ISO).getFullYear();
+    if (ap) { const apL = ap.toLowerCase(); if (apL === 'pm' && hh < 12) hh += 12; if (apL === 'am' && hh === 12) hh = 0; }
+    if (mi >= 0 && day >= 1 && day <= 31) return `${anchorYear2}-${pad(mi+1)}-${pad(day)}T${pad(hh)}:${pad(mm)}:00`;
+  }
+  const d = new Date(s); if (!isNaN(d.getTime())) return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  return null;
 }
 
-const SCHEDULER_FACTS = [
-  'Tip: scheduling inside business hours reduces overtime cost and improves technician utilization.',
-  'Tasks with part constraints can be sequenced after deliveries to minimize idle time.',
-  'Bundling PM with related corrective tasks saves setup/teardown time.',
-  'Avoid scheduling multiple long tasks on the same asset right before peak demand.',
-  'Reserve slack time for urgent corrective maintenance—micro-buffers help absorb variability.',
-];
-export function helloSchedulerFact() {
-  return SCHEDULER_FACTS[Math.floor(Math.random() * SCHEDULER_FACTS.length)];
+function hoursBetweenISO(start: string, end: string): number {
+  const s = new Date(start).getTime(); const e = new Date(end).getTime();
+  if (!isFinite(s) || !isFinite(e) || e <= s) return 1;
+  return (e - s) / 36e5;
 }
 
-/**
- * Central LLM entry for the Scheduler agent.
- * - Builds a rich prompt with goals, history, plan context, and knowledge pack.
- * - Asks the model to return strict JSON (intent/mutations/answer).
- * - Post-processes mutations to normalize IDs & timestamps, avoiding hard-coded business logic.
- */
+function ymd(d: Date) { return d.toISOString().slice(0,10); }
+function startOfDayISO(iso: string) {
+  const d = new Date(iso); d.setHours(0,0,0,0);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T00:00:00`;
+}
+function addDaysISO(iso: string, days: number) {
+  const d = new Date(iso); d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+}
+
+// ----------------- Deterministic fallbacks -----------------
+function detectMoveWorkOrder(text: string) {
+  const m = text.match(/move\s+(wo[-\s]?(\d+))/i);
+  if (!m) return null;
+  const woId = `WO-${m[2]}`;
+  const when = text.match(/(?:to|at|start(?:ing)? (?:at)?)\s+([^.,\n]+)$/i)?.[1] ?? text;
+  const iso = firstISOOrNull(when);
+  return { woId, startISO: iso };
+}
+
+function isNightShiftOps(text: string) {
+  return /(move|shift|reschedul\w*).*(all\s+)?ops?(\s+tasks?)?.*(night|evening|20:00|after.*hours)/i.test(text);
+}
+
+function isOptimizeWeek(text: string) {
+  return /(optimi[sz]e|plan|reflow|re-arrange).*(week|this week)/i.test(text) &&
+         /(business\s*hours|08:00|9:00|day)/i.test(text) &&
+         /(ops|operations).*(\+|-|±|plus|minus|shift).*(day|days)/i.test(text);
+}
+
+// Compute “move ops to 20:00” mutations with ±1 day spillover (no overlaps per vehicle)
+function computeNightMoves(pack: ReturnType<typeof buildKnowledgePack>, startHour = 20) {
+  const weekStart = WEEK_START_ISO.slice(0,10); // "2025-08-22"
+  const horizon = pack.meta.horizonDays ?? 7;
+  const byVehicle = new Map<string, any[]>();
+  for (const t of pack.opsTasks) {
+    const opsId = (t as any).opsId ?? (t as any).opsID ?? t.id;
+    if (!opsId || !t.vehicleId) continue;
+    const s = t.start, e = t.end;
+    const hours = (s && e) ? hoursBetweenISO(s, e) : 3;
+    const dayISO = s ? startOfDayISO(s) : `${weekStart}T00:00:00`;
+    const arr = byVehicle.get(t.vehicleId) ?? [];
+    arr.push({ opsId, vehicleId: t.vehicleId, dayISO, hours });
+    byVehicle.set(t.vehicleId, arr);
+  }
+
+  const mutations: any[] = [];
+  for (const [vid, rows] of byVehicle.entries()) {
+    // For each vehicle, map of dayIndex -> occupied segments (so we stack)
+    const occupied = new Map<number, Array<{start:number; end:number}>>();
+
+    function placeOnDay(dayIdx: number, hours: number): { startISO: string; endISO: string } | null {
+      if (dayIdx < 0 || dayIdx >= horizon) return null;
+      const day = new Date(`${weekStart}T00:00:00`);
+      day.setDate(day.getDate() + dayIdx);
+      const startISO = `${day.getFullYear()}-${pad(day.getMonth()+1)}-${pad(day.getDate())}T${pad(startHour)}:00:00`;
+      const durMs = hours * 36e5;
+      // stack if something already placed this night
+      const segs = occupied.get(dayIdx) ?? [];
+      let cursor = new Date(startISO).getTime();
+      if (segs.length) {
+        // push to the end of last segment (simple stacking)
+        const last = segs[segs.length-1];
+        cursor = Math.max(cursor, last.end);
+      }
+      const end = cursor + durMs;
+      // cap within same night: allow up to 23:59
+      const hardEnd = new Date(`${day.getFullYear()}-${pad(day.getMonth()+1)}-${pad(day.getDate())}T23:59:00`).getTime();
+      if (end > hardEnd) return null; // too long to fit tonight
+      segs.push({ start: cursor, end });
+      occupied.set(dayIdx, segs);
+      const sISO = new Date(cursor).toISOString().slice(0,19);
+      const eISO = new Date(end).toISOString().slice(0,19);
+      return { startISO: sISO, endISO: eISO };
+    }
+
+    function dayIndexFromISO(dayISO: string): number {
+      const base = new Date(`${weekStart}T00:00:00`);
+      const cur  = new Date(dayISO);
+      const dif  = Math.round((cur.getTime() - base.getTime()) / 86400000);
+      return Math.max(0, Math.min(horizon-1, dif));
+    }
+
+    for (const r of rows) {
+      const baseIdx = dayIndexFromISO(r.dayISO);
+      // try base day, then +1, then -1
+      const choices = [baseIdx, baseIdx+1, baseIdx-1].filter((x, i, a) => a.indexOf(x) === i);
+      let placed = null as null | { startISO: string; endISO: string };
+      for (const idx of choices) {
+        placed = placeOnDay(idx, r.hours);
+        if (placed) break;
+      }
+      if (!placed) {
+        // last resort: scan week forwards
+        for (let j = 0; j < horizon; j++) {
+          placed = placeOnDay(j, r.hours);
+          if (placed) break;
+        }
+      }
+      if (placed) {
+        mutations.push({
+          op: 'MOVE_OPS',
+          opsId: r.opsId,
+          vehicleId: vid,
+          startISO: placed.startISO,
+          endISO:   placed.endISO
+        });
+      }
+    }
+  }
+  return mutations;
+}
+
+// ----------------- Public: scheduler brain -----------------
 export async function analyzeWithLLM(
   userText: string,
   pack: ReturnType<typeof buildKnowledgePack>,
-  history: QATurn[] = [],
+  history: QATurn[],
   planCtx?: PlanContext
 ): Promise<AgentDecision> {
-  const hist = history.slice(-8).map(h => `${h.role.toUpperCase()}: ${h.text}`).join('\n');
-  const ctxSummary = planCtx
-    ? [
-        planCtx.lastAccepted
-          ? `LAST_ACCEPTED: moved=${planCtx.lastAccepted.moved}, scheduled=${planCtx.lastAccepted.scheduled}, unscheduled=${planCtx.lastAccepted.unscheduled}`
-          : 'LAST_ACCEPTED: none',
-        planCtx.preview
-          ? `PREVIEW: moved=${planCtx.preview.moved}, scheduled=${planCtx.preview.scheduled}, unscheduled=${planCtx.preview.unscheduled}`
-          : 'PREVIEW: none',
-      ].join('\n')
-    : 'NO_PLAN_CONTEXT';
 
-  const safePack = JSON.stringify(pack).slice(0, 120_000);
-
-  const sys = `
-You are a Maintenance Scheduler Agent for a fleet.
-You can either propose a whole-week plan (intent="PROPOSE") or output precise mutations (intent="MUTATE").
-Respect these rules:
-- Avoid overlapping operations on the same vehicle.
-- If asked, keep maintenance inside business hours (${pack.businessHours?.[0]}–${pack.businessHours?.[1]} local).
-- Honor explicit user instructions (IDs & times), and don't hallucinate IDs.
-- If an ID is unknown, state that clearly in the "answer".
-
-ALLOWED MUTATIONS (JSON objects inside "mutations"):
-- { "op":"ADD_WORKORDER", "vehicleId":"V005", "title":"Thermostat Inspection", "priority":"Medium", "type":"PM|CM", "requiredSkills":["Mechanic"], "hours":1, "start":"YYYY-MM-DDTHH:MM:SS", "end":"YYYY-MM-DDTHH:MM:SS" }
-- { "op":"MOVE_WORKORDER", "id":"WO-011", "start":"YYYY-MM-DDTHH:MM:SS", "end":"YYYY-MM-DDTHH:MM:SS" }
-- { "op":"CANCEL_WORKORDER", "id":"WO-011" }
-- { "op":"UPDATE_WORKORDER", "id":"WO-011", "title":"...", "priority":"High", "hours":2, "requiredSkills":["AutoElec"] }
-
-- { "op":"MOVE_OPS", "opsId":"OPS-123", "start":"YYYY-MM-DDTHH:MM:SS", "end":"YYYY-MM-DDTHH:MM:SS" }
-- { "op":"CANCEL_OPS", "opsId":"OPS-123" }
-- { "op":"ADD_OPS", "vehicleId":"V010", "title":"Backhaul", "start":"YYYY-MM-DDTHH:MM:SS", "end":"YYYY-MM-DDTHH:MM:SS" }
-
-- { "op":"ADD_TECH", "id":"T-NEW", "skills":["Mechanic"], "perDayHours":8 }
-- { "op":"REMOVE_TECH", "id":"T-02" }
-- { "op":"SET_AVAILABILITY", "techId":"T-01", "date":"YYYY-MM-DD", "hours":4 }
-
-- { "op":"ASSUME_PART_AVAILABLE", "part_name":"Thermostat", "quantity":10, "date":"YYYY-MM-DD" }
-
-OUTPUT CONTRACT:
-Return a single fenced block:
-\`\`\`json
-{
-  "intent": "QA" | "MUTATE" | "PROPOSE",
-  "answer": "short human explanation",
-  "mutations": [ ... zero or more of the ALLOWED MUTATIONS ... ]
-}
-\`\`\`
-If the user asks to “optimize the whole week”, set intent="PROPOSE" and explain policy. If they target specific IDs/dates, prefer intent="MUTATE" with only those changes.
-`;
-
-  const prompt = [
-    sys.trim(),
-    `\nHISTORY (most recent first):\n${hist || '(none)'}\n`,
-    `\nPLAN_CONTEXT:\n${ctxSummary}\n`,
-    `\nKNOWLEDGE_PACK_JSON:\n${safePack}\n`,
-    `\nUSER:\n${userText}\nPlease return only the fenced JSON as specified.`,
-  ].join('\n');
-
-  const text = await callOpenAI(prompt, 0.2, 900);
-  const obj = extractFirstJSON(text);
-
-  if (obj && (obj.intent === 'QA' || obj.intent === 'MUTATE' || obj.intent === 'PROPOSE')) {
-    const normalized = normalizeMutations(obj.mutations, userText, pack);
-    const decision: AgentDecision = {
-      intent: obj.intent,
-      answer: typeof obj.answer === 'string' ? obj.answer : undefined,
-      mutations: normalized,
-    };
-    return decision;
+  // 0) Deterministic special intents
+  if (isNightShiftOps(userText) || isOptimizeWeek(userText)) {
+    const muts = computeNightMoves(pack, 20);
+    const note = isOptimizeWeek(userText)
+      ? 'Moved ops to nights (±1 day) to open business hours. Click “Suggest” to reflow maintenance into 08:00–17:00.'
+      : 'Moved ops to nights (±1 day) per request.';
+    return { intent: 'MUTATE', mutations: muts, answer: note };
   }
 
-  return { intent: 'QA', answer: text?.trim() || 'I could not derive an answer.' };
+  // 1) Deterministic fallback for “move WO-011 …”
+  const mv = detectMoveWorkOrder(userText);
+  if (mv) {
+    if (!mv.startISO) {
+      return { intent: 'QA', answer: `I understood the work order (${mv.woId}) but couldn’t parse the new start. Try “Move ${mv.woId} to 2025-08-22T08:00”.` };
+    }
+    return { intent: 'MUTATE', mutations: [{ op: 'MOVE_WORKORDER', woId: mv.woId, startISO: mv.startISO }] };
+  }
+
+  // 2) Ask the model — with clear policy to *not* block creates due to conflicts
+  const sys = `
+You are a Scheduler Agent for a transport fleet.
+
+You may respond in two ways:
+1) Natural-language answer (short), OR
+2) A JSON with "mutations" only (see schema). Do NOT include extra keys.
+
+Schema:
+{
+  "mutations": [
+    {
+      "op": "MOVE_WORKORDER" | "ADD_WORKORDER" | "CANCEL_WORKORDER" | "MOVE_OPS" | "CANCEL_OPS",
+      "woId": "WO-011",
+      "opsId": "OPS-001",
+      "vehicleId": "V012",
+      "startISO": "YYYY-MM-DDTHH:mm:ss",
+      "endISO":   "YYYY-MM-DDTHH:mm:ss",
+      "hours": 1.5,
+      "title": "Thermostat Inspection",
+      "type": "CM" | "PM",
+      "priority": "High" | "Medium" | "Low",
+      "requiredSkills": ["Mechanic"]
+    }
+  ],
+  "explanation": "short rationale"
+}
+
+Rules:
+- Anchor week starts at ${WEEK_START_ISO.slice(0,10)} — normalize partial times like "8:00 on 22 Aug" to ISO (no timezone suffix).
+- Never refuse to ADD_WORKORDER because of a conflict; create it anyway. Conflict resolution is separate.
+- Treat provided workorders/ops tasks as the current truth (e.g., if WO-011 shows 14:00, use that).
+- If the user says “optimize/reschedule/plan the week”, prefer to move ops to **20:00** and allow ±1 day shifting to free 08:00–17:00 for maintenance, then say: “Click **Suggest** to reflow maintenance.”`;
+
+  const facts = {
+    meta: pack.meta,
+    workorders: pack.workorders.map(w => ({
+      id: w.id, vehicleId: w.vehicleId, title: w.title, status: w.status,
+      start: w.start, end: w.end, hours: w.hours, type: w.type, priority: w.priority
+    })),
+    opsTasks: pack.opsTasks.map(t => ({
+      id: (t as any).opsId ?? (t as any).opsID ?? t.id,
+      vehicleId: t.vehicleId, title: t.title, start: t.start, end: t.end
+    })),
+    overlaps: pack.facts,
+    planCtx
+  };
+
+  const prompt = `${sys}
+
+--- DATA ---
+${JSON.stringify(facts, null, 2)}
+
+--- HISTORY ---
+${history.map(h => `${h.role.toUpperCase()}: ${h.text}`).join('\n')}
+
+--- USER ---
+${userText}
+
+Respond with either a short answer or a JSON "mutations" block.`;
+
+  const raw = await callOpenAI(prompt);
+
+  // Try to extract "mutations" JSON
+  const jsonMatch = raw.match(/\{[\s\S]*"mutations"[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const obj = JSON.parse(jsonMatch[0]);
+      const muts = Array.isArray(obj.mutations) ? obj.mutations : [];
+      for (const m of muts) {
+        if (typeof m.startISO === 'string') m.startISO = firstISOOrNull(m.startISO);
+        if (typeof m.endISO === 'string')   m.endISO   = firstISOOrNull(m.endISO);
+      }
+      return { intent: 'MUTATE', mutations: muts, answer: obj.explanation || undefined };
+    } catch {
+      // fall through to text
+    }
+  }
+
+  // Otherwise return whatever the model said
+  return { intent: 'QA', answer: raw };
+}
+
+// Friendly hello
+export function helloSchedulerFact(): string {
+  return 'Hello 👋 — Scheduler Agent ready. I can move WOs, cancel ops, or shift all ops to 20:00 (±1 day) so you can reflow maintenance into 08:00–17:00.';
 }

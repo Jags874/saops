@@ -2,7 +2,6 @@
 import vehiclesRaw from './fake/vehicles.json';
 import workordersRaw from './fake/workorders.json';
 import opsTasksRaw from './fake/ops_tasks.json';
-// removed: demand.json
 import failuresRaw from './fake/failures.json';
 import conditionRaw from './fake/condition.json';
 
@@ -10,7 +9,7 @@ import type {
   Vehicle, WorkOrder, OpsTask, DemandRecord, FailureRecord, ConditionSnapshot, Skill
 } from '../types';
 
-// --- static demo week anchor (local midnight) ---
+// Static demo week anchor (local midnight)
 const WEEK_START = new Date('2025-08-22T00:00:00');
 
 // ---------- helpers ----------
@@ -39,17 +38,19 @@ function normalizeParts(input: any): string[] | undefined {
     input?.required_resources?.Parts;
 
   if (!Array.isArray(src) || src.length === 0) return undefined;
-  const out = src.map((p: any) => {
-    if (typeof p === 'string') return p;
-    if (p && typeof p === 'object') {
-      const id = p.partId ?? p.part_id ?? p.id ?? '';
-      const name = p.partName ?? p.part_name ?? p.name ?? '';
-      const qty = p.qty ?? p.quantity ?? '';
-      const label = name || id || 'part';
-      return qty ? `${label} x${qty}` : label;
-    }
-    return String(p);
-  }).filter(Boolean);
+  const out = src
+    .map((p: any) => {
+      if (typeof p === 'string') return p;
+      if (p && typeof p === 'object') {
+        const id = p.partId ?? p.part_id ?? p.id ?? '';
+        const name = p.partName ?? p.part_name ?? p.name ?? '';
+        const qty = p.qty ?? p.quantity ?? '';
+        const label = name || id || 'part';
+        return qty ? `${label} x${qty}` : label;
+      }
+      return String(p);
+    })
+    .filter(Boolean);
   return out.length ? out : undefined;
 }
 function normalizeTools(input: any): string[] | undefined {
@@ -60,13 +61,15 @@ function normalizeTools(input: any): string[] | undefined {
     input?.required_resources?.Tools;
 
   if (!Array.isArray(src) || src.length === 0) return undefined;
-  const out = src.map((t: any) => {
-    if (typeof t === 'string') return t;
-    if (t && typeof t === 'object') {
-      return t.name ?? t.tool ?? t.id ?? JSON.stringify(t);
-    }
-    return String(t);
-  }).filter(Boolean);
+  const out = src
+    .map((t: any) => {
+      if (typeof t === 'string') return t;
+      if (t && typeof t === 'object') {
+        return t.name ?? t.tool ?? t.id ?? JSON.stringify(t);
+      }
+      return String(t);
+    })
+    .filter(Boolean);
   return out.length ? out : undefined;
 }
 
@@ -102,7 +105,7 @@ export function getWorkOrders(): WorkOrder[] {
         : hoursDiff(startISO, endISO);
 
     const requiredSkills: Skill[] | undefined =
-      Array.isArray(w.requiredSkills) ? w.requiredSkills as Skill[] :
+      Array.isArray(w.requiredSkills) ? (w.requiredSkills as Skill[]) :
       (w.subsystem === 'electrical' ? (['AutoElec'] as Skill[]) : (['Mechanic'] as Skill[]));
 
     return {
@@ -129,15 +132,16 @@ export function getWorkOrders(): WorkOrder[] {
 export function getOpsTasks(_days = 7): OpsTask[] {
   const src: any[] = (opsTasksRaw as unknown as any[]) ?? [];
   return src.map((t, i) => {
-    const sISO = toISO(t.start ?? t.scheduled_start ?? t.scheduledStart ?? '');
-    const eISO = toISO(t.end ?? t.scheduled_end   ?? t.scheduledEnd   ?? '');
+    const sISO = toISO((t as any).start ?? (t as any).scheduled_start ?? (t as any).scheduledStart ?? '');
+    const eISO = toISO((t as any).end   ?? (t as any).scheduled_end   ?? (t as any).scheduledEnd   ?? '');
+    const idCandidate = (t as any)['id'] ?? (t as any)['opsId'] ?? `OPS-${i + 1}`;
     return {
-      id: String(t.id ?? t.opsId ?? `OPS-${i + 1}`),
-      vehicleId: String(t.vehicleId ?? t.asset_id ?? ''),
-      title: String(t.title ?? 'Transport Task'),
+      id: String(idCandidate),
+      vehicleId: String((t as any).vehicleId ?? (t as any).asset_id ?? ''),
+      title: String((t as any).title ?? 'Transport Task'),
       start: sISO ?? new Date('2025-08-22T00:00:00').toISOString(),
       end:   eISO ?? new Date('2025-08-22T01:00:00').toISOString(),
-      demandHours: Number(t.hours ?? t.demandHours ?? hoursDiff(sISO, eISO) ?? 0),
+      demandHours: Number((t as any).hours ?? (t as any).demandHours ?? hoursDiff(sISO, eISO) ?? 0),
     } as OpsTask;
   });
 }
@@ -154,12 +158,12 @@ export function getDemandHistory(horizonDays = 7): DemandRecord[] {
 
   const ops: any[] = (opsTasksRaw as unknown as any[]) ?? [];
   for (const t of ops) {
-    const sISO = toISO(t.start ?? t.scheduled_start ?? t.scheduledStart ?? '');
-    const eISO = toISO(t.end   ?? t.scheduled_end   ?? t.scheduledEnd   ?? '');
+    const sISO = toISO((t as any).start ?? (t as any).scheduled_start ?? (t as any).scheduledStart ?? '');
+    const eISO = toISO((t as any).end   ?? (t as any).scheduled_end   ?? (t as any).scheduledEnd   ?? '');
     if (!sISO || !eISO) continue;
     const day = ymdLocal(new Date(sISO));
     if (!byDay.has(day)) continue; // ignore tasks outside the horizon
-    const hours = Number(t.hours ?? t.demandHours ?? hoursDiff(sISO, eISO) ?? 0);
+    const hours = Number((t as any).hours ?? (t as any).demandHours ?? hoursDiff(sISO, eISO) ?? 0);
     byDay.set(day, (byDay.get(day) ?? 0) + hours);
   }
 
@@ -170,13 +174,13 @@ export function getDemandHistory(horizonDays = 7): DemandRecord[] {
 export function getFailures(): FailureRecord[] {
   const src: any[] = (failuresRaw as unknown as any[]) ?? [];
   return src.map(f => ({
-    id: String(f.id ?? f.failure_id ?? ''),
-    vehicleId: String(f.vehicleId ?? f.asset_id ?? ''),
-    subsystem: String(f.subsystem ?? f.system ?? 'engine'),
-    partId: f.partId ?? f.part_id ?? undefined,
-    failureMode: String(f.failureMode ?? f.failure_mode ?? 'unknown'),
-    date: toISO(f.date ?? f.failure_date ?? new Date().toISOString())!,
-    downtimeHours: Number(f.downtimeHours ?? f.downtime_hours ?? 0),
+    id: String((f as any).id ?? (f as any).failure_id ?? ''),
+    vehicleId: String((f as any).vehicleId ?? (f as any).asset_id ?? ''),
+    subsystem: String((f as any).subsystem ?? (f as any).system ?? 'engine'),
+    partId: (f as any).partId ?? (f as any).part_id ?? undefined,
+    failureMode: String((f as any).failureMode ?? (f as any).failure_mode ?? 'unknown'),
+    date: toISO((f as any).date ?? (f as any).failure_date ?? new Date().toISOString())!,
+    downtimeHours: Number((f as any).downtimeHours ?? (f as any).downtime_hours ?? 0),
   })) as FailureRecord[];
 }
 
@@ -184,16 +188,16 @@ export function getFailures(): FailureRecord[] {
 export function getCondition(): ConditionSnapshot[] {
   const src: any[] = (conditionRaw as unknown as any[]) ?? [];
   return src.map(c => {
-    const score = Number(c.condition ?? c.score ?? 80);
-    const band = (c.band ??
-      (score >= 80 ? 'Good' : score >= 60 ? 'Watch' : 'Poor')) as 'Good' | 'Watch' | 'Poor';
+    const score = Number((c as any).condition ?? (c as any).score ?? 80);
+    const band = (((c as any).band ??
+      (score >= 80 ? 'Good' : score >= 60 ? 'Watch' : 'Poor')) as 'Good' | 'Watch' | 'Poor');
     return {
-      vehicleId: String(c.vehicleId ?? c.asset_id ?? ''),
-      date: String(c.date ?? '').slice(0, 10),
-      subsystem: String(c.subsystem ?? 'engine'),
+      vehicleId: String((c as any).vehicleId ?? (c as any).asset_id ?? ''),
+      date: String((c as any).date ?? '').slice(0, 10),
+      subsystem: String((c as any).subsystem ?? 'engine'),
       condition: score,
       band,
-      notes: c.notes ?? undefined,
+      notes: (c as any).notes ?? undefined,
     };
   }) as ConditionSnapshot[];
 }
