@@ -5,33 +5,27 @@ import { getResourceSnapshot } from '../data/resourceStore';
 import type { Skill, WorkOrder } from '../types';
 
 const SKILLS: Skill[] = ['Mechanic', 'AutoElec'];
-
 function ymd(d: Date) { return d.toISOString().slice(0, 10); }
 function atStartOfDay(d: Date) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function hoursBetween(a: Date, b: Date) { return Math.max(0, (b.getTime() - a.getTime()) / 36e5); }
 
-export default function ResourceSummary() {
+export default function ResourceSummary({ version = 0 }: { version?: number }) {
   const horizon = 7;
 
-  // Build day list (YYYY-MM-DD)
-  const days = useMemo(() => {
-    const start = atStartOfDay(new Date());
-    return Array.from({ length: horizon }, (_, i) => {
-      const d = new Date(start); d.setDate(start.getDate() + i);
-      return ymd(d);
-    });
-  }, [horizon]);
+  // Fixed static week starting 2025-08-22
+  const start = new Date('2025-08-22T00:00:00');
+  const days = useMemo(() => Array.from({ length: horizon }, (_, i) => {
+    const d = new Date(start); d.setDate(d.getDate() + i); return ymd(d);
+  }), [horizon]);
 
-  // Pull current snapshot and work orders
   const { technicians, availability } = getResourceSnapshot();
-  const workorders: WorkOrder[] = useMemo(() => (getWorkOrders?.() ?? []), []);
+  const workorders: WorkOrder[] = useMemo(() => (getWorkOrders?.() ?? []), [version]);
 
   // Availability per day+skill
   const availByDaySkill = useMemo(() => {
     const map = new Map<string, Map<Skill, number>>();
     for (const day of days) map.set(day, new Map<Skill, number>(SKILLS.map(s => [s, 0])));
 
-    // Each availability slot contributes its hours to ALL skills of that tech (usually one)
     const techSkills = new Map<string, Skill[]>();
     for (const t of technicians ?? []) techSkills.set(t.id, (t.skills?.length ? t.skills : ['Mechanic']) as Skill[]);
 
@@ -39,53 +33,40 @@ export default function ResourceSummary() {
       if (!map.has(slot.date)) continue;
       const skills = techSkills.get(slot.technicianId) ?? (['Mechanic'] as Skill[]);
       const dayMap = map.get(slot.date)!;
-      for (const s of skills) {
-        dayMap.set(s, (dayMap.get(s)! + Number(slot.hours ?? 0)));
-      }
+      for (const s of skills) dayMap.set(s, (dayMap.get(s)! + Number(slot.hours ?? 0)));
     }
     return map;
-  }, [technicians, availability, days]);
+  }, [technicians, availability, days, version]);
 
   // Scheduled maintenance hours per day+skill
   const schedByDaySkill = useMemo(() => {
     const map = new Map<string, Map<Skill, number>>();
     for (const day of days) map.set(day, new Map<Skill, number>(SKILLS.map(s => [s, 0])));
 
-    const startOf = (day: string) => new Date(`${day}T00:00:00`);
-    const endOf   = (day: string) => new Date(`${day}T23:59:59`);
-
     for (const w of workorders) {
       if (!(w.status === 'Scheduled' || w.status === 'In Progress')) continue;
       if (!w.start || !w.end) continue;
-
-      const s = new Date(w.start);
-      const e = new Date(w.end);
+      const s = new Date(w.start), e = new Date(w.end);
       if (isNaN(s.getTime()) || isNaN(e.getTime())) continue;
 
-      // Allocate to requiredSkills (fallback to Mechanic unless electrical)
       const skills: Skill[] =
         (w.requiredSkills && w.requiredSkills.length ? w.requiredSkills :
           (w.subsystem === 'electrical' ? ['AutoElec'] : ['Mechanic'])) as Skill[];
 
-      // Attribute the WO's hours to the day containing its start time
       const day = ymd(atStartOfDay(s));
       if (!map.has(day)) continue;
 
       const dur = w.hours ?? hoursBetween(s, e);
       const per = dur / skills.length;
       const dayMap = map.get(day)!;
-      for (const k of skills) {
-        dayMap.set(k, (dayMap.get(k)! + per));
-      }
+      for (const k of skills) dayMap.set(k, (dayMap.get(k)! + per));
     }
     return map;
-  }, [workorders, days]);
+  }, [workorders, days, version]);
 
-  // Roll up totals & simple cards
   const rows = useMemo(() => {
     return SKILLS.map((skill) => {
-      let availableHours = 0;
-      let scheduledHours = 0;
+      let availableHours = 0, scheduledHours = 0;
       for (const d of days) {
         availableHours += availByDaySkill.get(d)!.get(skill)!;
         scheduledHours += schedByDaySkill.get(d)!.get(skill)!;
@@ -93,10 +74,10 @@ export default function ResourceSummary() {
       const utilisationPct = availableHours > 0 ? Math.round((scheduledHours / availableHours) * 100) : 0;
       return { skill, availableHours: Math.round(availableHours), scheduledHours: Math.round(scheduledHours), utilisationPct };
     });
-  }, [days, availByDaySkill, schedByDaySkill]);
+  }, [days, availByDaySkill, schedByDaySkill, version]);
 
-  // Simple bar heights for today
-  const today = days[0];
+  // Tiny “today” bars
+  const today = ymd(start);
   const todayBars = SKILLS.map((skill) => {
     const a = availByDaySkill.get(today)!.get(skill)!;
     const s = schedByDaySkill.get(today)!.get(skill)!;
@@ -134,7 +115,6 @@ export default function ResourceSummary() {
         ))}
       </div>
 
-      {/* Tiny “today” bars */}
       <div className="mt-3">
         <div className="text-xs text-slate-400 mb-1">Today</div>
         <div className="grid grid-cols-2 gap-2">

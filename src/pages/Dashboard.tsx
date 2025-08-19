@@ -3,8 +3,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { getVehicles, getWorkOrders, getOpsTasks } from '../data/adapter';
 import VehicleGallery from '../components/VehicleGallery';
 import GanttWeek from '../components/GanttWeek';
-import { Kpi } from '../components/Kpis';
 import WorkOrdersModal from '../components/WorkOrdersModal';
+import { applyMutationsToPlan } from '../data/mutatePlan';
+import { Kpi } from '../components/Kpis';
 import Agents from '../components/Agents';
 import type { AgentKey, SchedulerPolicy, ReportQuery, QATurn, AgentDecision, PlanContext } from '../types';
 import ResourceSummary from '../components/ResourceSummary';
@@ -15,12 +16,126 @@ import { analyzeWithLLM, helloSchedulerFact } from '../agents/agentRuntime';
 import { buildKnowledgePack } from '../agents/context';
 import { buildReliabilityPack, analyzeReliabilityWithLLM, helloReliabilityFact } from '../agents/reliability';
 import { buildPartsPack, analyzePartsWithLLM } from '../agents/parts';
-import { reseedGenericTechnicians, applyMutations, getResourceSnapshot } from '../data/resourceStore';
+import { reseedGenericTechnicians } from '../data/resourceStore';
+import DemoFooter from '../components/DemoFooter';
+
+/** ========= Local helpers (duration preserving, date range parsing) ========= */
+
+// Local-ISO writer (no trailing 'Z')
+function isoLocal(d: Date): string {
+  const t = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  return t.toISOString().replace('Z', '');
+}
+function addHours(d: Date, hrs: number) {
+  return new Date(d.getTime() + hrs * 3_600_000);
+}
+function setHMS(d: Date, h: number, m = 0, s = 0, ms = 0) {
+  const x = new Date(d);
+  x.setHours(h, m, s, ms);
+  return x;
+}
+function clampStartPreservingDuration(start: Date, durationH: number, open = 9, close = 17) {
+  const dayOpen = setHMS(start, open);
+  const dayClose = setHMS(start, close);
+  const latestStart = addHours(dayClose, -durationH);
+
+  let s = start < dayOpen ? dayOpen : start;
+  if (s > latestStart) {
+    const nextDay = new Date(start);
+    nextDay.setDate(nextDay.getDate() + 1);
+    s = setHMS(nextDay, open);
+  }
+  const e = addHours(s, durationH);
+  return { s, e };
+}
+
+const MONTHS: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, sept: 8, oct: 9, nov: 10, dec: 11
+};
+function parseDayLocal(y: number, mZero: number, d: number) {
+  return new Date(y, mZero, d, 0, 0, 0, 0);
+}
+function parseNaturalRange(text: string): { startLocalISO: string; endLocalISO: string } | null {
+  const t = text.toLowerCase();
+
+  // "22–28 aug 2025" / "22-28 aug 2025"
+  let m = t.match(/(\d{1,2})\s*[-–]\s*(\d{1,2})\s*([a-z]+)\s*(20\d{2})/i);
+  if (m) {
+    const d1 = parseInt(m[1], 10);
+    const d2 = parseInt(m[2], 10);
+    const month = MONTHS[m[3].slice(0, 3)];
+    const year = parseInt(m[4], 10);
+    if (Number.isInteger(month)) {
+      const start = parseDayLocal(year, month, d1);
+      const end = parseDayLocal(year, month, d2 + 1); // end exclusive
+      return { startLocalISO: isoLocal(start), endLocalISO: isoLocal(end) };
+    }
+  }
+
+  // "22/8/2025 – 28/8/2025"
+  m = t.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\s*[-–]\s*(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})/);
+  if (m) {
+    const d1 = parseInt(m[1], 10), mo1 = parseInt(m[2], 10) - 1, y1 = parseInt(m[3], 10);
+    const d2 = parseInt(m[4], 10), mo2 = parseInt(m[5], 10) - 1, y2 = parseInt(m[6], 10);
+    const start = parseDayLocal(y1, mo1, d1);
+    const end = parseDayLocal(y2, mo2, d2 + 1);
+    return { startLocalISO: isoLocal(start), endLocalISO: isoLocal(end) };
+  }
+
+  return null;
+}
+function insideWindow(d: Date, startISO?: string, endISO?: string) {
+  if (!startISO && !endISO) return true;
+  const t = +d;
+  if (startISO && t < +new Date(startISO)) return false;
+  if (endISO && t >= +new Date(endISO)) return false;
+  return true;
+}
+
+// Local policy shape used by page + scheduler
+export type PolicyExt = {
+  businessHours?: [number, number];
+  windowStartISO?: string;
+  windowEndISO?: string;
+};
+
+// post-process a preview to respect business hours + window, preserving duration
+function adjustPlanToPolicy(
+  plan: { workorders: any[]; opsTasks: any[] },
+  policy: PolicyExt
+) {
+  const [open, close] = policy.businessHours ?? [9, 17];
+
+  const fix = (item: any) => {
+    if (!item.start || !item.end) return;
+    const start = new Date(item.start);
+    const end = new Date(item.end);
+    if (isNaN(+start) || isNaN(+end)) return;
+
+    // rebase to window start @ open if outside window
+    let s = start;
+    if (!insideWindow(s, policy.windowStartISO, policy.windowEndISO) && policy.windowStartISO) {
+      s = setHMS(new Date(policy.windowStartISO), open);
+    }
+
+    const durationH = Math.max(0.25, (+end - +start) / 3_600_000);
+    const { s: s2, e: e2 } = clampStartPreservingDuration(s, durationH, open, close);
+    item.start = isoLocal(s2);
+    item.end = isoLocal(e2);
+  };
+
+  plan.workorders.forEach(fix);
+  plan.opsTasks.forEach(fix);
+  return plan;
+}
+
+/* ============================= Component ============================= */
 
 type StatusFilter = 'ALL' | 'AVAILABLE' | 'DUE' | 'DOWN';
 
 type PlanSnapshot = {
   workorders: ReturnType<typeof getWorkOrders>;
+  opsTasks: ReturnType<typeof getOpsTasks>;
   summary: string[];
   moved: number;
   scheduled: number;
@@ -33,32 +148,26 @@ type PlanSnapshot = {
 };
 
 export default function Dashboard() {
-  // Seed simplified tech model once (Mechanic/AutoElec, smaller team)
   useEffect(() => { reseedGenericTechnicians(); }, []);
 
-  // Base data
+  // Base data (ops in state so agent edits are visible). IMPORTANT: no UI clamping here.
   const vehicles = useMemo(() => getVehicles(20), []);
   const [workorders, setWorkorders] = useState(() => getWorkOrders());
-  const opsTasks = useMemo(() => getOpsTasks(7), []);
+  const [opsTasks, setOpsTasks] = useState(() => getOpsTasks(7));
 
   // UI state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [selectedWoId, setSelectedWoId] = useState<string | null>(null);
 
-  const [woOpen, setWoOpen] = useState(false);
-  const [modalIgnoreVehicle, setModalIgnoreVehicle] = useState(false);
-  const [focusedWorkOrderId, setFocusedWorkOrderId] = useState<string | null>(null);
-
-  // Planning state
   const [preview, setPreview] = useState<PlanSnapshot | null>(null);
-  const [planHistory, setPlanHistory] = useState<PlanSnapshot[]>([]); // keep last ~6
+  const [planHistory, setPlanHistory] = useState<PlanSnapshot[]>([]);
 
-  // Active agent + hello injection
   const [activeAgent, setActiveAgent] = useState<AgentKey>('scheduler');
   const [helloMessage, setHelloMessage] = useState<string | undefined>(undefined);
   const [helloNonce, setHelloNonce] = useState<number>(0);
 
-  // Derived KPIs
+  // KPIs
   const outstanding = useMemo(
     () => workorders.filter(w => w.status === 'Open' || w.status === 'Scheduled' || w.status === 'In Progress'),
     [workorders]
@@ -77,6 +186,7 @@ export default function Dashboard() {
   const visibleVehicleIds = useMemo(() => new Set(visibleVehicles.map(v => v.id)), [visibleVehicles]);
 
   const baseWorkorders = preview ? preview.workorders : workorders;
+  const baseOps = preview ? preview.opsTasks : opsTasks;
 
   const visibleWorkorders = useMemo(() => {
     const base = baseWorkorders.filter(w => visibleVehicleIds.has(w.vehicleId));
@@ -84,21 +194,9 @@ export default function Dashboard() {
   }, [baseWorkorders, visibleVehicleIds, selectedVehicleId]);
 
   const visibleOpsTasks = useMemo(() => {
-    const base = opsTasks.filter(t => visibleVehicleIds.has(t.vehicleId));
+    const base = baseOps.filter(t => visibleVehicleIds.has(t.vehicleId));
     return selectedVehicleId ? base.filter(t => t.vehicleId === selectedVehicleId) : base;
-  }, [opsTasks, visibleVehicleIds, selectedVehicleId]);
-
-  const outstandingForModal = useMemo(() => {
-    const source = baseWorkorders;
-    if (focusedWorkOrderId) {
-      const item = source.find(w => w.id === focusedWorkOrderId);
-      return item ? [item] : [];
-    }
-    const base = source
-      .filter(w => w.status === 'Open' || w.status === 'Scheduled' || w.status === 'In Progress')
-      .filter(w => visibleVehicleIds.has(w.vehicleId));
-    return (!modalIgnoreVehicle && selectedVehicleId) ? base.filter(w => w.vehicleId === selectedVehicleId) : base;
-  }, [baseWorkorders, focusedWorkOrderId, selectedVehicleId, visibleVehicleIds, modalIgnoreVehicle]);
+  }, [baseOps, visibleVehicleIds, selectedVehicleId]);
 
   // UI helper
   const chip = (label: string, val: StatusFilter) => (
@@ -116,12 +214,13 @@ export default function Dashboard() {
     </button>
   );
 
-  // ====== Agent hooks ======
+  /* ================= Agent hooks ================= */
 
   const agentDecide = async (text: string, history: QATurn[]): Promise<AgentDecision> => {
     if (activeAgent === 'scheduler') {
       const baseWos = preview ? preview.workorders : workorders;
       const pack = buildKnowledgePack({ horizonDays: 7, baseWorkorders: baseWos });
+
       const planCtx: PlanContext = {
         lastAccepted: planHistory.at(-1) ? {
           when: planHistory.at(-1)!.when,
@@ -142,6 +241,8 @@ export default function Dashboard() {
           unscheduledIds: preview.unscheduledIds,
         } : undefined
       };
+
+      // Return decision only; we'll apply side-effects in onDecide
       return await analyzeWithLLM(text, pack, history, planCtx);
     }
 
@@ -158,10 +259,23 @@ export default function Dashboard() {
     return { intent: 'QA', answer: `The ${activeAgent} agent isn’t wired up yet — try Scheduler, Reliability, or Parts.` };
   };
 
-  const agentSuggest = async (policy?: SchedulerPolicy) => {
-    const res = proposeSchedule(workorders, opsTasks, policy);
+  // NOTE: widen the type locally (we always cast from LLM anyway)
+  const agentSuggest = async (policy?: PolicyExt) => {
+    const res = proposeSchedule(baseWorkorders, baseOps, policy as SchedulerPolicy);
+
+    // post-process to respect window + hours & preserve durations
+    const adjusted = adjustPlanToPolicy(
+      { workorders: res.workorders, opsTasks: res.opsTasks },
+      {
+        businessHours: (policy?.businessHours ?? [9, 17]),
+        windowStartISO: policy?.windowStartISO,
+        windowEndISO: policy?.windowEndISO,
+      }
+    );
+
     const snap: PlanSnapshot = {
-      workorders: res.workorders,
+      workorders: adjusted.workorders,
+      opsTasks: adjusted.opsTasks,
       summary: res.rationale,
       moved: res.moved,
       scheduled: res.scheduled,
@@ -180,19 +294,13 @@ export default function Dashboard() {
   const agentAccept = () => {
     if (!preview) return;
     setWorkorders(preview.workorders);
+    setOpsTasks(preview.opsTasks);
     const accepted: PlanSnapshot = { ...preview, status: 'accepted', when: new Date().toISOString() };
     setPlanHistory(prev => [...prev.slice(-5), accepted]);
     setPreview(null);
   };
 
   const agentReject = () => { setPreview(null); };
-
-  function woIndex(list: ReturnType<typeof getWorkOrders>) {
-    return new Map(list.map(w => [w.id, w]));
-  }
-  function isScheduled(w?: { status?: string; start?: string }) {
-    return !!(w && w.status === 'Scheduled' && w.start);
-  }
 
   const agentReport = async (q: ReportQuery) => {
     const plan = preview ?? planHistory.at(-1) ?? null;
@@ -202,13 +310,12 @@ export default function Dashboard() {
       ids.map(id => planWorkorders[idx.get(id)!]).filter(Boolean).map(w => `${w.id} — ${w.title} (${w.vehicleId})`).slice(0, 50);
 
     if (q.kind === 'DELTA') {
-      if (planHistory.length < 2) {
-        return 'I only have one accepted plan so far — accept another proposal, then I can compare changes.';
-      }
+      if (planHistory.length < 2) return 'I only have one accepted plan so far — accept another proposal, then I can compare changes.';
       const nBack = Math.max(1, Math.min(q.nBack ?? 1, planHistory.length - 1));
       const newer = planHistory.at(-1)!;
       const older = planHistory.at(-1 - nBack)!;
 
+      const woIndex = (list: ReturnType<typeof getWorkOrders>) => new Map(list.map(w => [w.id, w]));
       const A = woIndex(older.workorders);
       const B = woIndex(newer.workorders);
 
@@ -217,6 +324,8 @@ export default function Dashboard() {
       const becameUnscheduled: string[] = [];
 
       const ids = new Set<string>([...A.keys(), ...B.keys()]);
+      const isScheduled = (w?: { status?: string; start?: string }) => !!(w && w.status === 'Scheduled' && w.start);
+
       for (const id of ids) {
         const a = A.get(id);
         const b = B.get(id);
@@ -264,23 +373,24 @@ export default function Dashboard() {
     }
 
     if (q.kind === 'MOVED') {
+      const plan = planHistory.at(-1);
       if (plan) {
         const items = pick(plan.movedIds);
         return items.length
-          ? `${plan.status === 'preview' ? 'Moved in the current proposal' : 'Moved in the last accepted plan'}:\n- ${items.join('\n- ')}`
+          ? `Moved in the last accepted plan:\n- ${items.join('\n- ')}`
           : 'No maintenance tasks were moved in this context.';
-      } else {
-        return 'I don’t have a baseline to determine what moved. Ask me to “suggest a new schedule” and accept it first.';
       }
+      return 'I don’t have a baseline to determine what moved. Ask me to “suggest a new schedule” and accept it first.';
     }
 
     if (q.kind === 'SCHEDULED_FOR_VEHICLE' && q.vehicleId) {
+      const plan = planHistory.at(-1);
       if (plan) {
-        const scheduledForV = planWorkorders
+        const scheduledForV = plan.workorders
           .filter(w => w.vehicleId === q.vehicleId && (plan.scheduledIds.includes(w.id) || plan.movedIds.includes(w.id)))
           .map(w => `${w.id} — ${w.title}: ${new Date(w.start!).toLocaleString()} → ${new Date(w.end!).toLocaleTimeString()}`);
         return scheduledForV.length
-          ? `Scheduled for ${q.vehicleId} (${plan.status === 'preview' ? 'proposal' : 'accepted plan'}):\n- ${scheduledForV.join('\n- ')}`
+          ? `Scheduled for ${q.vehicleId} (accepted plan):\n- ${scheduledForV.join('\n- ')}`
           : `No changes for ${q.vehicleId} in this context.`;
       } else {
         const scheduledForV = workorders
@@ -297,7 +407,7 @@ export default function Dashboard() {
     return `Summary (current state): ~${sched} scheduled, ~${uns} unscheduled.`;
   };
 
-  // Handle hello buttons on cards
+  // hello buttons
   const helloFromCard = (agent: AgentKey) => {
     setActiveAgent(agent);
     const msg =
@@ -308,36 +418,14 @@ export default function Dashboard() {
     setHelloNonce(Date.now());
   };
 
-  const agentTitle =
-    activeAgent === 'scheduler'   ? 'Scheduler Agent' :
-    activeAgent === 'reliability' ? 'Reliability Agent' :
-                                     'Parts Interpreter';
-
-  // Apply MUTATE instructions coming from the Scheduler Agent
-  const handleDecisionSideEffects = (d: AgentDecision) => {
-    if (d.intent === 'MUTATE' && d.mutations?.length) {
-      const notes = applyMutations(d.mutations);
-      // After resource/parts changes, re-run a quick proposal to reflect capacity/parts
-      // (User can still say "accept" to apply)
-      agentSuggest(undefined);
-      return (d.answer ? d.answer + '\n' : '') + `Applied changes:\n- ${notes.join('\n- ')}`;
-    }
-    return d.answer ?? undefined;
-  };
-
   return (
     <div className="p-4 md:p-6 lg:p-8 grid grid-cols-1 lg:[grid-template-columns:1fr_18rem] gap-6">
       <div className="space-y-6">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <Kpi title="No Outstanding Maintenance" value={clear} />
-          <Kpi title="Outstanding Maintenance" value={due} />
-          <Kpi title="Broken / In Workshop" value={down} />
-          <Kpi
-            title="Outstanding Work Orders"
-            value={outstanding.length}
-            sub="Click to view details"
-            onClick={() => { setFocusedWorkOrderId(null); setModalIgnoreVehicle(false); setWoOpen(true); }}
-          />
+          <Kpi title="No Outstanding Maintenance" value={clear} onClick={() => setStatusFilter('AVAILABLE')} />
+          <Kpi title="Outstanding Maintenance" value={due} onClick={() => setStatusFilter('DUE')} />
+          <Kpi title="Broken / In Workshop" value={down} onClick={() => setStatusFilter('DOWN')} />
+          <Kpi title="Outstanding Work Orders" value={outstanding.length} />
           <Kpi title="Maintenance Backlog (hrs)" value={backlogHrs} />
         </div>
 
@@ -352,17 +440,52 @@ export default function Dashboard() {
         />
 
         <AgentConsole
-          title={agentTitle}
+          title={activeAgent === 'scheduler' ? 'Scheduler Agent' : activeAgent === 'reliability' ? 'Reliability Agent' : 'Parts Interpreter'}
           hasPreview={!!preview}
-          onSuggest={agentSuggest}
+          onSuggest={(pol?: SchedulerPolicy) => agentSuggest(pol as unknown as PolicyExt)}
           onAccept={agentAccept}
-          onReject={agentReject}
+          onReject={() => setPreview(null)}
           onReport={agentReport}
           onDecide={async (text, history) => {
             const decision = await agentDecide(text, history);
-            // If scheduler asked to mutate resources/parts, apply them here:
-            const maybeMsg = handleDecisionSideEffects(decision);
-            return maybeMsg ? { ...decision, intent: decision.intent === 'MUTATE' ? 'QA' : decision.intent, answer: maybeMsg } : decision;
+
+            // MUTATE → apply immediately
+            if (decision.intent === 'MUTATE' && (decision as any).mutations?.length) {
+              const baseWos = preview ? preview.workorders : workorders;
+              const baseOps = preview ? preview.opsTasks   : opsTasks;
+
+              const { workorders: wo2, opsTasks: op2, notes } =
+                applyMutationsToPlan(baseWos, baseOps, (decision as any).mutations, { businessHours: [9,17] });
+
+              setWorkorders(wo2);
+              setOpsTasks(op2);
+              setPreview(null);
+
+              return {
+                ...decision,
+                intent: 'QA',
+                answer: (decision.answer ? decision.answer + '\n' : '') +
+                        (notes.length ? `Applied changes:\n- ${notes.join('\n- ')}` : 'Applied changes.'),
+              };
+            }
+
+            // PLAN → parse range from the *user text*, augment policy, then propose + preview
+            if (decision.intent === 'PLAN' && (decision as any).policy) {
+              const pol: PolicyExt = { ...(decision as any).policy };
+
+              // parse "22–28 Aug 2025" / "22/8/2025–28/8/2025"
+              const range = parseNaturalRange(text);
+              if (range) {
+                pol.windowStartISO = range.startLocalISO;
+                pol.windowEndISO   = range.endLocalISO;
+              }
+              if (!pol.businessHours) pol.businessHours = [9,17];
+
+              await agentSuggest(pol);
+              return { ...decision, answer: decision.answer ?? 'Proposed a new plan.' };
+            }
+
+            return decision;
           }}
           helloMessage={helloMessage}
           helloNonce={helloNonce}
@@ -385,7 +508,7 @@ export default function Dashboard() {
               </div>
               <div className="flex gap-2 shrink-0">
                 <button onClick={agentAccept} className="px-3 py-1.5 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-sm">Accept</button>
-                <button onClick={agentReject} className="px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm">Reject</button>
+                <button onClick={() => setPreview(null)} className="px-3 py-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-100 text-sm">Reject</button>
               </div>
             </div>
           </div>
@@ -421,17 +544,19 @@ export default function Dashboard() {
           vehicles={visibleVehicles}
           workorders={visibleWorkorders}
           opsTasks={visibleOpsTasks}
-          onTaskClick={(woId) => { setFocusedWorkOrderId(woId); setModalIgnoreVehicle(true); setWoOpen(true); }}
+          onTaskClick={(id) => setSelectedWoId(id)}
+        />
+
+        {/* single, page-level modal */}
+        <WorkOrdersModal
+          open={!!selectedWoId}
+          onClose={() => setSelectedWoId(null)}
+          workorders={workorders.filter(w => w.id === selectedWoId)}
         />
       </div>
 
       <VehicleGallery vehicles={visibleVehicles} selectedId={selectedVehicleId} onSelect={setSelectedVehicleId} />
-
-      <WorkOrdersModal
-        open={woOpen}
-        onClose={() => { setWoOpen(false); setModalIgnoreVehicle(false); setFocusedWorkOrderId(null); }}
-        workorders={outstandingForModal}
-      />
+      <DemoFooter />
     </div>
   );
 }

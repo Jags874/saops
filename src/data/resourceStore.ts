@@ -1,64 +1,102 @@
 // src/data/resourceStore.ts
-import { getTechnicians, getAvailability } from './adapter';
-import { getPartsCatalog } from './partsCatalog';
-import type { Mutation } from '../types';
+import type { Technician, AvailabilitySlot, Skill } from '../types';
 
-export type Tech = { id: string; name: string; skills: string[]; depot?: string };
-export type Avail = { technicianId: string; date: string; hours: number };
-export type Part = ReturnType<typeof getPartsCatalog>[number];
+// Minimal mutation shape understood by applyMutations
+export type AgentMutation = { op: string; [k: string]: any };
 
-let technicians: Tech[] = [];
-let availability: Avail[] = [];
-let parts: Part[] = [];
+// In-memory stores (shared across calls)
+let technicians: Technician[] = [];
+let availability: AvailabilitySlot[] = [];
+let seeded = false;
 
+const WEEK_START = new Date('2025-08-22T00:00:00');
+function ymdLocal(d: Date) {
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
+function weekDays(start = WEEK_START, days = 7): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    out.push(ymdLocal(d));
+  }
+  return out;
+}
+
+/** Seed a smaller, generic team once (Mechanic & AutoElec) with 8h/day availability. */
 export function reseedGenericTechnicians() {
-  const raw = getTechnicians?.() ?? [];
-  const norm = raw.map((t: any, i: number) => ({
-    id: String(t.id ?? `tech${i+1}`),
-    name: String(t.name ?? `Tech ${i+1}`),
-    skills: (t.skills ?? ['Mechanic']).map((s: string) => /elec/i.test(s) ? 'AutoElec' : 'Mechanic'),
-    depot: t.depot ?? 'Depot A'
-  }));
-  const mech = norm.filter((t: any) => t.skills.includes('Mechanic')).slice(0, 4);
-  const elec = norm.filter((t: any) => t.skills.includes('AutoElec')).slice(0, 2);
-  technicians = [...mech, ...elec];
-
-  const ids = new Set(technicians.map(t => t.id));
-  availability = (getAvailability?.() ?? [])
-    .filter((a: any) => ids.has(String(a.technicianId)))
-    .map((a: any) => ({ technicianId: String(a.technicianId), date: String(a.date), hours: Number(a.hours ?? 8) }));
-
-  parts = getPartsCatalog();
+  if (seeded) return;
+  technicians = [
+    { id: 'T-M1', name: 'Alex Carter', skills: ['Mechanic'] as Skill[] },
+    { id: 'T-M2', name: 'Sam Morgan',  skills: ['Mechanic'] as Skill[] },
+    { id: 'T-E1', name: 'Jamie Lee',   skills: ['AutoElec'] as Skill[] },
+  ];
+  const days = weekDays(WEEK_START, 7);
+  availability = [];
+  for (const d of days) {
+    for (const t of technicians) {
+      availability.push({ technicianId: t.id, date: d, hours: 8 });
+    }
+  }
+  seeded = true;
 }
 
-export function getResourceSnapshot() {
-  return { technicians, availability, parts };
+/** Snapshot used by ResourceSummary and scheduler */
+export function getResourceSnapshot(): { technicians: Technician[]; availability: AvailabilitySlot[] } {
+  return { technicians: [...technicians], availability: [...availability] };
 }
 
-export function applyMutations(muts: Mutation[]): string[] {
+/** Apply resource/parts mutations coming from the Scheduler Agent */
+export function applyMutations(muts: AgentMutation[] = []): string[] {
   const notes: string[] = [];
   for (const m of muts) {
-    if (m.op === 'ADD_TECH') {
-      const id = m.id ?? `tech${technicians.length + 1}`;
-      technicians.push({ id, name: m.name ?? id, skills: [m.skill], depot: m.depot ?? 'Depot A' });
-      notes.push(`Added tech ${id} (${m.skill})${m.depot ? ` @ ${m.depot}` : ''}`);
-    }
-    if (m.op === 'SET_AVAILABILITY') {
-      const idx = availability.findIndex(a => a.technicianId === m.technicianId && a.date === m.date);
-      if (idx >= 0) availability[idx].hours = m.hours;
-      else availability.push({ technicianId: m.technicianId, date: m.date, hours: m.hours });
-      notes.push(`Set availability for ${m.technicianId} on ${m.date} = ${m.hours}h`);
-    }
-    if (m.op === 'MARK_PART_AVAILABLE') {
-      const p = parts.find(x => x.part_id === m.partId);
-      if (p) {
-        (p as any).stock = Number((p as any).stock ?? 0) + (m.qty ?? 0);
-        if (m.eta) (p as any).eta = m.eta;
-      } else {
-        (parts as any).push({ part_id: m.partId, part_name: m.partId, subsystem: 'unknown', stock: m.qty ?? 0, eta: m.eta });
+    const op = String(m.op ?? '').toUpperCase();
+
+    if (op === 'ADD_TECH') {
+      const id: string = m.id ?? `T-${Math.random().toString(36).slice(2, 7)}`;
+      const name: string = m.name ?? 'New Tech';
+      const skills: Skill[] = (Array.isArray(m.skills) && m.skills.length ? m.skills : ['Mechanic']) as Skill[];
+      technicians.push({ id, name, skills });
+      // default availability: 8h/day across the demo week
+      for (const d of weekDays(WEEK_START, 7)) {
+        availability.push({ technicianId: id, date: d, hours: Number(m.dailyHours ?? 8) });
       }
-      notes.push(`Part ${m.partId}: +${m.qty ?? 0} stock${m.eta ? ` (eta ${m.eta})` : ''}`);
+      notes.push(`Added technician ${name} (${skills.join(', ')}) with default availability.`);
+      continue;
     }
+
+    if (op === 'REMOVE_TECH') {
+      const tid: string = m.technicianId ?? m.id;
+      if (!tid) { notes.push('REMOVE_TECH missing technicianId'); continue; }
+      technicians = technicians.filter(t => t.id !== tid);
+      availability = availability.filter(a => a.technicianId !== tid);
+      notes.push(`Removed technician ${tid} and their availability.`);
+      continue;
+    }
+
+    if (op === 'SET_AVAIL') {
+      const tid: string = m.technicianId;
+      const date: string = m.date;
+      const hours: number = Number(m.hours ?? 0);
+      if (!tid || !date) { notes.push('SET_AVAIL missing technicianId/date'); continue; }
+      let slot = availability.find(a => a.technicianId === tid && a.date === date);
+      if (!slot) {
+        slot = { technicianId: tid, date, hours: 0 };
+        availability.push(slot);
+      }
+      slot.hours = hours;
+      notes.push(`Set availability for ${tid} on ${date} to ${hours}h.`);
+      continue;
+    }
+
+    // Accept but no-op unknown/parts mutations (other stores may handle them)
+    if (op.startsWith('ADD_PART') || op.startsWith('SET_PART') || op.startsWith('REMOVE_PART')) {
+      notes.push(`(Parts store not modeled) Acknowledged ${op}.`);
+      continue;
+    }
+
+    // Unhandled op
+    notes.push(`Unknown mutation ${op} — ignored`);
   }
   return notes;
 }

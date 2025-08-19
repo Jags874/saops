@@ -1,22 +1,202 @@
 [
-  { "id": "V001", "make": "Kenworth",  "model": "K200",        "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V002", "make": "Volvo",     "model": "FH16",        "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V003", "make": "Scania",    "model": "R500",        "depot": "Depot A", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V004", "make": "Mack",      "model": "Anthem",      "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V005", "make": "DAF",       "model": "XF",          "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V006", "make": "Mercedes",  "model": "Actros",      "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V007", "make": "Kenworth",  "model": "T610",        "depot": "Depot C", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V008", "make": "Volvo",     "model": "FM",          "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V009", "make": "Scania",    "model": "G410",        "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V010", "make": "Mack",      "model": "Granite",     "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V011", "make": "DAF",       "model": "CF",          "depot": "Depot A", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V012", "make": "Mercedes",  "model": "Arocs",       "depot": "Depot B", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V013", "make": "Kenworth",  "model": "K220",        "depot": "Depot A", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V014", "make": "Volvo",     "model": "FH",          "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V015", "make": "Scania",    "model": "S730",        "depot": "Depot B", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V016", "make": "Mack",      "model": "Super-Liner", "depot": "Depot A", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V017", "make": "DAF",       "model": "XG+",         "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V018", "make": "Mercedes",  "model": "Actros",      "depot": "Depot B", "status": "DOWN",      "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V019", "make": "Kenworth",  "model": "T909",        "depot": "Depot A", "status": "DUE",       "photoUrl": "/assets/prime-mover.png" },
-  { "id": "V020", "make": "Volvo",     "model": "FMX",         "depot": "Depot C", "status": "AVAILABLE", "photoUrl": "/assets/prime-mover.png" }
+  {
+    "id": "V001",
+    "model": "Mercedes Actros",
+    "year": 2019,
+    "odometerKm": 848151,
+    "engineHours": 9751,
+    "criticality": "Low",
+    "status": "AVAILABLE",
+    "depot": "East"
+  },
+  {
+    "id": "V002",
+    "model": "Mercedes Actros",
+    "year": 2018,
+    "odometerKm": 572426,
+    "engineHours": 7948,
+    "criticality": "Low",
+    "status": "AVAILABLE",
+    "depot": "East"
+  },
+  {
+    "id": "V003",
+    "model": "Volvo FH16",
+    "year": 2023,
+    "odometerKm": 515860,
+    "engineHours": 6375,
+    "criticality": "Medium",
+    "status": "DUE",
+    "depot": "North"
+  },
+  {
+    "id": "V004",
+    "model": "DAF XF",
+    "year": 2019,
+    "odometerKm": 413057,
+    "engineHours": 7889,
+    "criticality": "High",
+    "status": "AVAILABLE",
+    "depot": "North"
+  },
+  {
+    "id": "V005",
+    "model": "Volvo FH16",
+    "year": 2019,
+    "odometerKm": 864230,
+    "engineHours": 5964,
+    "criticality": "Low",
+    "status": "DOWN",
+    "depot": "North"
+  },
+  {
+    "id": "V006",
+    "model": "DAF XF",
+    "year": 2024,
+    "odometerKm": 279515,
+    "engineHours": 5042,
+    "criticality": "High",
+    "status": "DUE",
+    "depot": "South"
+  },
+  {
+    "id": "V007",
+    "model": "Scania R500",
+    "year": 2024,
+    "odometerKm": 633404,
+    "engineHours": 7876,
+    "criticality": "Low",
+    "status": "DOWN",
+    "depot": "East"
+  },
+  {
+    "id": "V008",
+    "model": "Kenworth T610",
+    "year": 2024,
+    "odometerKm": 241306,
+    "engineHours": 6512,
+    "criticality": "High",
+    "status": "AVAILABLE",
+    "depot": "North"
+  },
+  {
+    "id": "V009",
+    "model": "Mercedes Actros",
+    "year": 2023,
+    "odometerKm": 715969,
+    "engineHours": 5033,
+    "criticality": "High",
+    "status": "DUE",
+    "depot": "North"
+  },
+  {
+    "id": "V010",
+    "model": "Volvo FH16",
+    "year": 2024,
+    "odometerKm": 485996,
+    "engineHours": 4432,
+    "criticality": "Medium",
+    "status": "DUE",
+    "depot": "South"
+  },
+  {
+    "id": "V011",
+    "model": "Scania R500",
+    "year": 2024,
+    "odometerKm": 313066,
+    "engineHours": 8156,
+    "criticality": "High",
+    "status": "DOWN",
+    "depot": "South"
+  },
+  {
+    "id": "V012",
+    "model": "Kenworth T610",
+    "year": 2023,
+    "odometerKm": 728342,
+    "engineHours": 4245,
+    "criticality": "High",
+    "status": "AVAILABLE",
+    "depot": "West"
+  },
+  {
+    "id": "V013",
+    "model": "Kenworth T610",
+    "year": 2022,
+    "odometerKm": 727639,
+    "engineHours": 6202,
+    "criticality": "Medium",
+    "status": "DUE",
+    "depot": "East"
+  },
+  {
+    "id": "V014",
+    "model": "Volvo FH16",
+    "year": 2020,
+    "odometerKm": 495306,
+    "engineHours": 6053,
+    "criticality": "Medium",
+    "status": "AVAILABLE",
+    "depot": "North"
+  },
+  {
+    "id": "V015",
+    "model": "Mercedes Actros",
+    "year": 2018,
+    "odometerKm": 491336,
+    "engineHours": 8441,
+    "criticality": "Low",
+    "status": "AVAILABLE",
+    "depot": "South"
+  },
+  {
+    "id": "V016",
+    "model": "Mercedes Actros",
+    "year": 2018,
+    "odometerKm": 305540,
+    "engineHours": 5679,
+    "criticality": "Low",
+    "status": "DUE",
+    "depot": "West"
+  },
+  {
+    "id": "V017",
+    "model": "Mercedes Actros",
+    "year": 2021,
+    "odometerKm": 732114,
+    "engineHours": 3306,
+    "criticality": "High",
+    "status": "AVAILABLE",
+    "depot": "North"
+  },
+  {
+    "id": "V018",
+    "model": "Mercedes Actros",
+    "year": 2024,
+    "odometerKm": 658532,
+    "engineHours": 4112,
+    "criticality": "Low",
+    "status": "DOWN",
+    "depot": "South"
+  },
+  {
+    "id": "V019",
+    "model": "DAF XF",
+    "year": 2021,
+    "odometerKm": 368532,
+    "engineHours": 9983,
+    "criticality": "Medium",
+    "status": "DUE",
+    "depot": "East"
+  },
+  {
+    "id": "V020",
+    "model": "Kenworth T610",
+    "year": 2020,
+    "odometerKm": 746329,
+    "engineHours": 6525,
+    "criticality": "Medium",
+    "status": "DUE",
+    "depot": "West"
+  }
 ]

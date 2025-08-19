@@ -1,7 +1,50 @@
 [
-  { "id":"techA","name":"Tech A","skills":["engine","general"],        "depot":"Depot A" },
-  { "id":"techB","name":"Tech B","skills":["transmission"],            "depot":"Depot A" },
-  { "id":"techD","name":"Tech D","skills":["engine"],                  "depot":"Depot B" },
-  { "id":"techE","name":"Tech E","skills":["brakes","general"],        "depot":"Depot C" },
-  { "id":"techH","name":"Tech H","skills":["electrical"],              "depot":"Depot A" }
+  {
+    "id": "techA",
+    "name": "Alex",
+    "skills": [
+      "Mechanic"
+    ],
+    "depot": "Depot A"
+  },
+  {
+    "id": "techB",
+    "name": "Bailey",
+    "skills": [
+      "Mechanic"
+    ],
+    "depot": "Depot A"
+  },
+  {
+    "id": "techC",
+    "name": "Casey",
+    "skills": [
+      "Mechanic"
+    ],
+    "depot": "Depot B"
+  },
+  {
+    "id": "techD",
+    "name": "Drew",
+    "skills": [
+      "Mechanic"
+    ],
+    "depot": "Depot B"
+  },
+  {
+    "id": "techE",
+    "name": "Eden",
+    "skills": [
+      "AutoElec"
+    ],
+    "depot": "Depot A"
+  },
+  {
+    "id": "techF",
+    "name": "Flynn",
+    "skills": [
+      "AutoElec"
+    ],
+    "depot": "Depot B"
+  }
 ]

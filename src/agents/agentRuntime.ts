@@ -1,130 +1,110 @@
 // src/agents/agentRuntime.ts
-import type {
-  SchedulerPolicy, ReportQuery, QATurn, AgentDecision, PlanContext
-} from '../types';
-import type { KnowledgePack } from './context';
+import type { QATurn, AgentDecision, SchedulerPolicy } from '../types';
 
-const normalize = (s: string) =>
-  s.replace(/\u2018|\u2019|\u201B/g, "'").replace(/\u201C|\u201D/g, '"').replace(/\s+/g, ' ').trim();
+// Read key from Vite env (client-side). Make sure you have VITE_OPENAI_API_KEY set.
+const OPENAI_API_KEY = (import.meta as any).env?.VITE_OPENAI_API_KEY;
 
-function safeSlice<T>(arr: T[] | undefined, n = 60): T[] | undefined {
-  if (!arr) return arr;
-  return arr.length > n ? arr.slice(0, n) : arr;
+// Enforce a strict output schema so the UI can act on it
+const SCHEMA = `
+You are the Scheduler Agent. Output ONLY a JSON object with this shape (no prose):
+
+{
+  "intent": "MUTATE" | "PLAN" | "QA",
+  "answer": string,                // short human-friendly confirmation/summary
+  "mutations": [                   // present when intent="MUTATE"
+    { "op": "MOVE_WO", "id": "WO-011", "start": "YYYY-MM-DDTHH:mm:ss", "hours": 2 },
+    { "op": "CANCEL_WO", "id": "WO-012" },
+    { "op": "MOVE_OPS", "id": "OPS-105", "start": "YYYY-MM-DDTHH:mm:ss", "hours": 8 },
+    { "op": "CANCEL_OPS", "id": "OPS-090" },
+    { "op": "ADD_WO", "vehicleId": "V005", "title": "Replace alternator", "hours": 2, "priority": "High", "requiredSkills": ["AutoElec"], "start": "YYYY-MM-DDTHH:mm:ss" }
+  ],
+  "policy": {                      // present when intent="PLAN"
+    "businessHours": [8,17],
+    "opsShiftDays": 1,
+    "avoidOpsOverlap": true,
+    "forVehicle": "V005"           // optional
+  }
 }
-function parseJSONFrom(text: string): any | null {
-  const t = text.trim();
-  const fence = t.match(/```json\s*([\s\S]*?)```/i);
-  const raw = fence ? fence[1] : t;
-  try { return JSON.parse(raw); } catch { return null; }
+Rules:
+- Normalize IDs to WO-### and OPS-###.
+- Dates: interpret week around the current demo week; output local-ISO (no timezone Z).
+- Never invent fields not in the schema.
+`;
+
+function extractJSON(text: string): any | null {
+  try {
+    // try whole string
+    return JSON.parse(text);
+  } catch {
+    // try to find a {...} block
+    const m = text.match(/\{[\s\S]*\}$/);
+    if (!m) return null;
+    try { return JSON.parse(m[0]); } catch { return null; }
+  }
 }
 
 export async function analyzeWithLLM(
-  question: string,
-  pack: KnowledgePack,
-  history: QATurn[] = [],
-  plan: PlanContext = {}
+  text: string,
+  _pack: any,
+  _history: QATurn[],
+  _ctx?: any
 ): Promise<AgentDecision> {
-  const key = import.meta.env.VITE_OPENAI_API_KEY;
-  if (!key) return { intent: 'QA', answer: 'Cloud reasoning key missing. Add VITE_OPENAI_API_KEY in .env.local and restart.' };
+  // If no key, at least respond (prevents “does nothing”)
+  if (!OPENAI_API_KEY) {
+    return {
+      intent: 'QA',
+      answer: "Scheduler isn't configured with an API key. Add VITE_OPENAI_API_KEY to use LLM planning. Meanwhile, try: “Move WO-011 to 09:00 on 22 Aug”, “Cancel WO-012”, “Optimise to day shift ±1 day ops”."
+    };
+  }
 
-  const shortHistory = history.slice(-6);
-  const planContext: PlanContext = {
-    lastAccepted: plan.lastAccepted ? {
-      ...plan.lastAccepted,
-      movedIds: safeSlice(plan.lastAccepted.movedIds, 120),
-      scheduledIds: safeSlice(plan.lastAccepted.scheduledIds, 120),
-      unscheduledIds: safeSlice(plan.lastAccepted.unscheduledIds, 120),
-    } : undefined,
-    preview: plan.preview ? {
-      ...plan.preview,
-      movedIds: safeSlice(plan.preview.movedIds, 120),
-      scheduledIds: safeSlice(plan.preview.scheduledIds, 120),
-      unscheduledIds: safeSlice(plan.preview.unscheduledIds, 120),
-    } : undefined
+  // Build a compact chat with instructions + the user utterance
+  const body = {
+    model: 'gpt-4o-mini',
+    temperature: 0.2,
+    messages: [
+      { role: 'system', content: SCHEMA },
+      { role: 'user', content: text }
+    ]
   };
-
-  const SYSTEM = [
-    'You are the Scheduler Agent for a fleet maintenance app.',
-    'You receive a Knowledge Pack + short history + plan context.',
-    'INTENTS:',
-    ' • SUGGEST: produce a scheduling policy (JSON).',
-    ' • ACCEPT / REJECT: apply or discard the current preview.',
-    ' • REPORT: return a report query JSON.',
-    ' • QA: natural language concise answer using ONLY provided data.',
-    ' • MUTATE: change resources/parts (add technicians, set availability, mark a part available) via JSON mutations.',
-    'When MUTATE is used, also reply with a short natural-language confirmation in "answer".',
-  ].join('\n');
-
-  const RESPONSE_FORMAT = [
-    'Return ONLY this JSON (no extra text):',
-    '```json',
-    '{',
-    '  "intent": "SUGGEST|ACCEPT|REJECT|REPORT|QA|MUTATE",',
-    '  "policy": { "windows": [{"startHour": 18, "endHour": 23}], "avoidOps": true, "weekendsAllowed": true, "vehicleScope": ["V001"], "depotScope": ["Depot B"], "horizonDays": 7, "prioritize": ["Corrective","Critical","High","Preventive","Medium","Low"], "splitLongJobs": true, "maxChunkHours": 4 },',
-    '  "report": { "kind": "UNSCHEDULED", "vehicleId": "V007", "nBack": 1 },',
-    '  "mutations": [',
-    '    { "op": "ADD_TECH", "name": "Temp Tech", "skill": "Mechanic", "depot": "Depot B", "hoursPerDay": 8 },',
-    '    { "op": "SET_AVAILABILITY", "technicianId": "techA", "date": "2025-08-22", "hours": 6 },',
-    '    { "op": "MARK_PART_AVAILABLE", "partId": "P-221", "qty": 2, "eta": "2025-08-23" }',
-    '  ],',
-    '  "answer": "Short confirmation or explanation.",',
-    '  "confidence": 0.0',
-    '}',
-    '```'
-  ].join('\n');
-
-  const messages = [
-    { role: 'system', content: SYSTEM },
-    { role: 'system', content: RESPONSE_FORMAT },
-    { role: 'user', content: `KNOWLEDGE_PACK:\n\`\`\`json\n${JSON.stringify(pack)}\n\`\`\`` },
-    { role: 'user', content: `PLAN_CONTEXT:\n\`\`\`json\n${JSON.stringify(planContext)}\n\`\`\`` },
-    { role: 'user', content: `HISTORY:\n\`\`\`json\n${JSON.stringify(shortHistory)}\n\`\`\`` },
-    { role: 'user', content: `QUESTION:\n${normalize(question)}` },
-  ] as const;
 
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-4o-mini', messages, temperature: 0.2 })
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
   });
 
+  if (!resp.ok) {
+    const msg = await resp.text().catch(() => String(resp.status));
+    return { intent: 'QA', answer: `LLM error: ${msg}` };
+  }
+
   const data = await resp.json();
-  if (!resp.ok || data?.error) {
-    const reason = data?.error?.message ?? resp.statusText;
-    return { intent: 'QA', answer: `Model error: ${reason}` };
+  const raw = data?.choices?.[0]?.message?.content ?? '';
+  const parsed = extractJSON(raw);
+
+  if (!parsed || typeof parsed !== 'object') {
+    return { intent: 'QA', answer: "I couldn't produce a valid plan. Please try a more direct instruction (e.g., “Move WO-011 to 09:00 on 22 Aug”)." };
   }
 
-  const text = String(data?.choices?.[0]?.message?.content ?? '');
-  const obj = parseJSONFrom(text) ?? {};
-  const rawIntent = String(obj.intent ?? 'QA').toUpperCase();
-  const allowed = new Set(['SUGGEST','ACCEPT','REJECT','REPORT','QA','MUTATE']);
-  const intent = (allowed.has(rawIntent) ? rawIntent : 'QA') as AgentDecision['intent'];
+  // Basic normalization/guardrails
+  const intent = (parsed.intent === 'MUTATE' || parsed.intent === 'PLAN') ? parsed.intent : 'QA';
+  const answer = typeof parsed.answer === 'string' ? parsed.answer : undefined;
 
-  const decision: AgentDecision = {
-    intent,
-    policy: obj.policy,
-    report: obj.report,
-    answer: obj.answer,
-    mutations: Array.isArray(obj.mutations) ? obj.mutations : undefined,
-    confidence: typeof obj.confidence === 'number' ? obj.confidence : undefined
-  };
-
-  if (decision.intent === 'SUGGEST' && decision.policy?.horizonDays) {
-    decision.policy.horizonDays = Math.max(1, Math.min(14, Number(decision.policy.horizonDays)));
+  if (intent === 'MUTATE' && Array.isArray(parsed.mutations)) {
+    return { intent: 'MUTATE', answer, mutations: parsed.mutations } as any;
   }
 
-  return decision;
+  if (intent === 'PLAN' && parsed.policy && typeof parsed.policy === 'object') {
+    const policy = parsed.policy as SchedulerPolicy;
+    return { intent: 'PLAN', answer, policy } as any;
+  }
+
+  return { intent: 'QA', answer: answer ?? 'Not sure what to do with that.' };
 }
 
-const FACTS = [
-  'Grouping PM by skill reduces changeovers and increases wrench time.',
-  'Night/weekend windows cut conflicts with transport demand.',
-  'Carry spares for long-lead, high-criticality parts to reduce downtime.',
-  'Split long jobs into chunks to fit tight capacity.',
-  'Backlog > 2× weekly capacity predicts future breakdowns.',
-  'Depot-specific scheduling avoids travel time and slippage.',
-];
-export function helloSchedulerFact(): string {
-  const fact = FACTS[Math.floor(Math.random() * FACTS.length)];
-  return `Hello 👋 — I’m the Scheduler Agent. Tip: ${fact}`;
+export function helloSchedulerFact() {
+  return 'Hello 👋 — I can move/cancel WOs & OPS, add WOs, and propose plans (day shift, ±1 day ops, no overlaps).';
 }
