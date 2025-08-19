@@ -31,6 +31,25 @@ type KnowledgePack = {
   };
 };
 
+/** Normalize whatever computeClashes returns into { count, list } */
+function normalizeClashes(ret: any): { count: number; list: any[] } {
+  if (Array.isArray(ret)) {
+    return { count: ret.length, list: ret };
+  }
+  if (ret && typeof ret === 'object') {
+    if (Array.isArray(ret.clashes)) {
+      return { count: typeof ret.total === 'number' ? ret.total : (ret.count ?? ret.clashes.length), list: ret.clashes };
+    }
+    if (Array.isArray(ret.items)) {
+      return { count: ret.count ?? ret.items.length, list: ret.items };
+    }
+    if (Array.isArray(ret.overlaps)) {
+      return { count: ret.overlaps.length, list: ret.overlaps };
+    }
+  }
+  return { count: 0, list: [] };
+}
+
 /**
  * Build the agent knowledge pack. The Dashboard calls this with:
  *   buildKnowledgePack({ horizonDays, baseWorkorders })
@@ -49,7 +68,8 @@ export function buildKnowledgePack(opts: {
   const vehiclesLite = getVehicles(20).map(v => ({ id: v.id, status: v.status }));
 
   // Precompute WO vs Ops overlaps (exact, deterministic facts)
-  const overlap = computeClashes(baseWorkorders, ops);
+  const rawOverlap = computeClashes(baseWorkorders, ops);
+  const { count: clashCount, list: clashes } = normalizeClashes(rawOverlap);
 
   return {
     meta: { weekStartISO: WEEK_START_ISO, horizonDays },
@@ -57,8 +77,8 @@ export function buildKnowledgePack(opts: {
     workorders: baseWorkorders,
     opsTasks: ops,
     facts: {
-      clashCount: overlap.total,
-      clashes: overlap.clashes.slice(0, 250), // cap for prompt size
+      clashCount,
+      clashes: clashes.slice(0, 250), // cap for prompt size
     },
   };
 }

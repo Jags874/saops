@@ -10,7 +10,7 @@ import type {
 } from '../types';
 
 // Static demo week anchor (local midnight)
-const WEEK_START = new Date('2025-08-22T00:00:00');
+export const WEEK_START = new Date('2025-08-22T00:00:00');
 
 // ---------- helpers ----------
 function toISO(d?: string | null): string | undefined {

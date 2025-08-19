@@ -1,7 +1,10 @@
+// src/pages/Dashboard.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { getVehicles, getWorkOrders, getOpsTasks } from '../data/adapter';
 import VehicleGallery from '../components/VehicleGallery';
 import GanttWeek from '../components/GanttWeek';
+import WorkOrdersModal from '../components/WorkOrdersModal';
+import { applyMutationsToPlan } from '../data/mutatePlan';
 import { Kpi } from '../components/Kpis';
 import Agents from '../components/Agents';
 import type { AgentKey, SchedulerPolicy, ReportQuery, QATurn, AgentDecision, PlanContext } from '../types';
@@ -13,8 +16,29 @@ import { analyzeWithLLM, helloSchedulerFact } from '../agents/agentRuntime';
 import { buildKnowledgePack } from '../agents/context';
 import { buildReliabilityPack, analyzeReliabilityWithLLM, helloReliabilityFact } from '../agents/reliability';
 import { buildPartsPack, analyzePartsWithLLM } from '../agents/parts';
-import { reseedGenericTechnicians, applyMutations } from '../data/resourceStore';
+import { reseedGenericTechnicians } from '../data/resourceStore';
 import DemoFooter from '../components/DemoFooter';
+
+// Shift an ISO range but keep duration; clamp into [8,17] window inside the same day.
+function normalizeIntoDayWindow(startISO: string, endISO: string, hours: [number, number] = [8,17]) {
+  const start = new Date(startISO);
+  const end   = new Date(endISO);
+  if (isNaN(+start) || isNaN(+end)) return { startISO, endISO };
+  const durMs = end.getTime() - start.getTime();
+
+  const d = new Date(start);
+  d.setHours(hours[0], 0, 0, 0);
+  const sDay = d;
+  const eDay = new Date(start); eDay.setHours(hours[1], 0, 0, 0);
+
+  // if duration doesn't fit, just cap at end-of-window
+  const newStart = sDay;
+  const newEnd = new Date(Math.min(newStart.getTime() + durMs, eDay.getTime()));
+
+  const toLocal = (x: Date) => new Date(x.getTime() - x.getTimezoneOffset() * 60000).toISOString();
+  return { startISO: toLocal(newStart), endISO: toLocal(newEnd) };
+}
+
 
 type StatusFilter = 'ALL' | 'AVAILABLE' | 'DUE' | 'DOWN';
 
@@ -35,14 +59,22 @@ type PlanSnapshot = {
 export default function Dashboard() {
   useEffect(() => { reseedGenericTechnicians(); }, []);
 
-  // Base data (ops now in state so agent edits are visible)
+  // Base data (ops in state so agent edits are visible)
   const vehicles = useMemo(() => getVehicles(20), []);
   const [workorders, setWorkorders] = useState(() => getWorkOrders());
-  const [opsTasks, setOpsTasks] = useState(() => getOpsTasks(7));
+  const [opsTasks, setOpsTasks] = useState(() => {
+    const ops = getOpsTasks(7);
+    return ops.map(t => {
+      if (!t.start || !t.end) return t;
+      const { startISO, endISO } = normalizeIntoDayWindow(t.start, t.end, [8,17]);
+      return { ...t, start: startISO, end: endISO };
+    });
+  });
 
   // UI state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | null>(null);
+  const [selectedWoId, setSelectedWoId] = useState<string | null>(null);
 
   const [preview, setPreview] = useState<PlanSnapshot | null>(null);
   const [planHistory, setPlanHistory] = useState<PlanSnapshot[]>([]);
@@ -98,11 +130,13 @@ export default function Dashboard() {
     </button>
   );
 
-  // ====== Agent hooks ======
+  /* ================= Agent hooks ================= */
+
   const agentDecide = async (text: string, history: QATurn[]): Promise<AgentDecision> => {
     if (activeAgent === 'scheduler') {
       const baseWos = preview ? preview.workorders : workorders;
       const pack = buildKnowledgePack({ horizonDays: 7, baseWorkorders: baseWos });
+
       const planCtx: PlanContext = {
         lastAccepted: planHistory.at(-1) ? {
           when: planHistory.at(-1)!.when,
@@ -123,14 +157,14 @@ export default function Dashboard() {
           unscheduledIds: preview.unscheduledIds,
         } : undefined
       };
+
       const decision = await analyzeWithLLM(text, pack, history, planCtx);
 
-      // NEW: If the agent returns PLAN with a policy, auto-run a proposal
-      // so the user sees an immediate change without clicking "Suggest".
+      // if PLAN includes policy, auto-propose to create a preview
       const policy = (decision as any)?.policy as SchedulerPolicy | undefined;
       if (decision.intent === 'PLAN' && policy) {
         await agentSuggest(policy);
-        return { ...decision, answer: (decision.answer ?? 'Proposed a new plan.') };
+        return { ...decision, answer: decision.answer ?? 'Proposed a new plan.' };
       }
       return decision;
     }
@@ -152,7 +186,7 @@ export default function Dashboard() {
     const res = proposeSchedule(baseWorkorders, baseOps, policy);
     const snap: PlanSnapshot = {
       workorders: res.workorders,
-      opsTasks: res.opsTasks,                 // NEW: include ops edits in preview
+      opsTasks: res.opsTasks,
       summary: res.rationale,
       moved: res.moved,
       scheduled: res.scheduled,
@@ -171,7 +205,7 @@ export default function Dashboard() {
   const agentAccept = () => {
     if (!preview) return;
     setWorkorders(preview.workorders);
-    setOpsTasks(preview.opsTasks);            // NEW: accept ops edits
+    setOpsTasks(preview.opsTasks);
     const accepted: PlanSnapshot = { ...preview, status: 'accepted', when: new Date().toISOString() };
     setPlanHistory(prev => [...prev.slice(-5), accepted]);
     setPreview(null);
@@ -284,7 +318,7 @@ export default function Dashboard() {
     return `Summary (current state): ~${sched} scheduled, ~${uns} unscheduled.`;
   };
 
-  // Hello buttons
+  // hello buttons
   const helloFromCard = (agent: AgentKey) => {
     setActiveAgent(agent);
     const msg =
@@ -295,16 +329,27 @@ export default function Dashboard() {
     setHelloNonce(Date.now());
   };
 
-  // If scheduler asked to mutate or plan, handle it here
-  const handleDecisionSideEffects = (d: AgentDecision) => {
-    if (d.intent === 'MUTATE' && (d as any).mutations?.length) {
-      const notes = applyMutations((d as any).mutations);
-      // After resource/parts changes, re-run a quick proposal (carry policy if provided)
-      const pol = (d as any).policy as SchedulerPolicy | undefined;
-      agentSuggest(pol);
-      return (d.answer ? d.answer + '\n' : '') + `Applied changes:\n- ${notes.join('\n- ')}`;
+  // central side-effects handler (fixes earlier “d not defined” issue)
+  const handleDecisionSideEffects = (decision: AgentDecision) => {
+    if (decision.intent === 'MUTATE' && Array.isArray((decision as any).mutations) && (decision as any).mutations.length) {
+      const { workorders: wo2, opsTasks: op2, notes } =
+        applyMutationsToPlan(workorders, opsTasks, (decision as any).mutations, { businessHours: [8, 17] });
+
+      setWorkorders(wo2);
+      setOpsTasks(op2);
+      setPreview(null);
+
+      const base = (decision as any).answer ? String((decision as any).answer) + '\n' : '';
+      return base + `Applied changes:\n- ${notes.join('\n- ')}`;
     }
-    return d.answer ?? undefined;
+
+    if (decision.intent === 'PLAN' && (decision as any).policy) {
+      const pol = (decision as any).policy as SchedulerPolicy;
+      void agentSuggest(pol); // sets preview
+      return (decision as any).answer ?? undefined;
+    }
+
+    return undefined;
   };
 
   return (
@@ -337,8 +382,8 @@ export default function Dashboard() {
           onReport={agentReport}
           onDecide={async (text, history) => {
             const decision = await agentDecide(text, history);
-            const maybe = handleDecisionSideEffects(decision);
-            return maybe ? { ...decision, intent: decision.intent === 'MUTATE' ? 'QA' : decision.intent, answer: maybe } : decision;
+            const msg = handleDecisionSideEffects(decision);
+            return msg ? ({ intent: 'QA', answer: msg } as AgentDecision) : decision;
           }}
           helloMessage={helloMessage}
           helloNonce={helloNonce}
@@ -397,7 +442,14 @@ export default function Dashboard() {
           vehicles={visibleVehicles}
           workorders={visibleWorkorders}
           opsTasks={visibleOpsTasks}
-          onTaskClick={() => {}}
+          onTaskClick={(id) => setSelectedWoId(id)}
+        />
+
+        {/* single, page-level modal */}
+        <WorkOrdersModal
+          open={!!selectedWoId}
+          onClose={() => setSelectedWoId(null)}
+          workorders={workorders.filter(w => w.id === selectedWoId)}
         />
       </div>
 
